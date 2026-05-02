@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { setAdmin } = useAdminStore();
+  const { setAdmin, setInitialized } = useAdminStore();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,6 +20,7 @@ export default function AdminLoginPage() {
     try {
       const data = await adminApi.login(form.email, form.password);
       setAdmin(data.data);
+      setInitialized(true); // prevent layout from re-calling getMe and wiping auth state
       toast.success('Welcome back');
       router.replace('/admin/overview');
     } catch (err: any) {

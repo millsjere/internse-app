@@ -54,6 +54,7 @@ export interface ICompany {
   coverPhoto?: string;
   verified: boolean;
   mustSetPassword?: boolean;
+  teamRole?: 'admin' | 'recruiter' | 'viewer';
   onboardingStep: 'profile' | 'subscription' | 'complete';
   paymentPlan: {
     planType: 'starter' | 'growth' | 'enterprise';

@@ -29,6 +29,7 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
 
     const company = user as ICompany | null;
     const step = company?.onboardingStep;
+    const teamRole = company?.teamRole;
 
     // Invited team members must set their password first — bypass onboarding check
     if (company?.mustSetPassword) {
@@ -43,8 +44,18 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
 
     if (!isOnboardingRoute && step !== 'complete') {
       router.push('/employer/onboarding');
+      return;
     }
-  }, [isInitialized, isLoading, isAuthenticated, userType, user, isOnboardingRoute, isJoinTeamRoute, isSetPasswordRoute, router]);
+
+    // Restrict recruiter/viewer from overview and settings pages
+    if (teamRole && teamRole !== 'admin') {
+      const isOverview = pathname === '/employer';
+      const isSettings = pathname.startsWith('/employer/settings');
+      if (isOverview || isSettings) {
+        router.push('/employer/jobs');
+      }
+    }
+  }, [isInitialized, isLoading, isAuthenticated, userType, user, pathname, isOnboardingRoute, isJoinTeamRoute, isSetPasswordRoute, router]);
 
   if (!isInitialized || isLoading) {
     return (

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { AdminShell } from '@/app/components/admin/AdminShell';
 import { useAdminStore } from '@/lib/adminStore';
-import { adminApi } from '@/lib/adminApi';
+import { adminApi, getAdminToken } from '@/lib/adminApi';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -15,6 +15,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (isInitialized) return;
+    // Only attempt getMe if there's a stored token — avoids a wasted 401 on fresh visits
+    if (!getAdminToken()) {
+      clearAdmin();
+      setInitialized(true);
+      return;
+    }
     adminApi.getMe()
       .then((data) => {
         setAdmin(data.data);

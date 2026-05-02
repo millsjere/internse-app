@@ -9,12 +9,25 @@ import { ThemeToggler } from '@/app/components/ThemeToggler';
 import { Avatar } from '@/app/components/ui/Avatar';
 import { ConfirmModal } from '@/app/components/ui/ConfirmModal';
 import { NotificationDrawer } from '@/app/components/dashboard/NotificationDrawer';
+import { ICompany } from '@/types';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import {
   Bell, Menu, ChevronDown, User, CreditCard, LogOut,
 } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Admin',
+  recruiter: 'Recruiter',
+  viewer: 'Viewer',
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  admin: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  recruiter: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  viewer: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+};
 
 export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter();
@@ -27,6 +40,8 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isCompany = userType === 'company';
+
+  const teamRole = isCompany ? (user as ICompany | null)?.teamRole : undefined;
 
   const displayName = user
     ? isCompany
@@ -145,7 +160,16 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
               {/* User info header */}
               <div className="px-3 py-2 mb-1 border-b border-gray-100 dark:border-gray-800">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{displayName}</p>
-                <p className="text-xs text-gray-400 truncate">{(user as any)?.email}</p>
+                {teamRole ? (
+                  <span className={cn(
+                    'inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase tracking-wide',
+                    ROLE_COLORS[teamRole] ?? ROLE_COLORS.viewer
+                  )}>
+                    {ROLE_LABELS[teamRole] ?? teamRole}
+                  </span>
+                ) : (
+                  <p className="text-xs text-gray-400 truncate">{(user as any)?.email}</p>
+                )}
               </div>
 
               <Link
@@ -157,14 +181,16 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
                 Profile
               </Link>
 
-              <Link
-                href={subscriptionHref}
-                onClick={() => setDropdownOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 mx-1 rounded-lg"
-              >
-                <CreditCard className="w-4 h-4 text-gray-400" />
-                Subscription
-              </Link>
+              {!teamRole && (
+                <Link
+                  href={subscriptionHref}
+                  onClick={() => setDropdownOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 mx-1 rounded-lg"
+                >
+                  <CreditCard className="w-4 h-4 text-gray-400" />
+                  Subscription
+                </Link>
+              )}
 
               <div className="h-px bg-gray-100 dark:bg-gray-800 mx-2 my-1" />
 

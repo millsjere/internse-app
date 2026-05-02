@@ -1,5 +1,16 @@
 import axios, { AxiosInstance } from 'axios';
 
+const ADMIN_TOKEN_KEY = 'admin_jwt';
+
+export const getAdminToken = () =>
+  typeof window !== 'undefined' ? localStorage.getItem(ADMIN_TOKEN_KEY) : null;
+
+export const setAdminToken = (token: string) =>
+  typeof window !== 'undefined' && localStorage.setItem(ADMIN_TOKEN_KEY, token);
+
+export const clearAdminToken = () =>
+  typeof window !== 'undefined' && localStorage.removeItem(ADMIN_TOKEN_KEY);
+
 class AdminApiClient {
   private client: AxiosInstance;
 
@@ -9,16 +20,30 @@ class AdminApiClient {
       withCredentials: true,
       headers: { 'Content-Type': 'application/json' },
     });
+
+    // Attach stored token as Bearer header on every request
+    this.client.interceptors.request.use((config) => {
+      const token = getAdminToken();
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    });
   }
 
   // ─── Auth ───────────────────────────────────────────────
   async login(email: string, password: string) {
     const res = await this.client.post('/auth/login', { email, password });
+    // Store token so subsequent requests are authenticated cross-origin
+    if (res.data?.token) {
+      setAdminToken(res.data.token);
+    }
     return res.data;
   }
 
   async logout() {
     const res = await this.client.post('/auth/logout');
+    clearAdminToken();
     return res.data;
   }
 

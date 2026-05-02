@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useAuthStore } from '@/lib/store';
+import { ICompany } from '@/types';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -15,13 +17,14 @@ interface NavItem {
   href: string;
   icon: LucideIcon;
   exact?: boolean;
+  roles?: Array<'admin' | 'recruiter' | 'viewer'>; // if set, only these roles can see the item
 }
 
 const employerNav: NavItem[] = [
-  { label: 'Overview',    href: '/employer',           icon: LayoutDashboard, exact: true },
-  { label: 'Jobs',        href: '/employer/jobs',      icon: Briefcase },
+  { label: 'Overview',    href: '/employer',            icon: LayoutDashboard, exact: true, roles: ['admin'] },
+  { label: 'Jobs',        href: '/employer/jobs',       icon: Briefcase },
   { label: 'Applicants',  href: '/employer/applicants', icon: Users },
-  { label: 'Settings',    href: '/employer/settings',  icon: Settings },
+  { label: 'Settings',    href: '/employer/settings',   icon: Settings, roles: ['admin'] },
 ];
 
 const userNav: NavItem[] = [
@@ -38,7 +41,17 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ variant }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const navItems = variant === 'employer' ? employerNav : userNav;
+  const { user } = useAuthStore();
+  const teamRole = variant === 'employer' ? (user as ICompany | null)?.teamRole : undefined;
+
+  const rawNav = variant === 'employer' ? employerNav : userNav;
+
+  // Filter nav items: if item has `roles` restriction and user has a teamRole, enforce it
+  // Owner accounts (no teamRole) see everything
+  const navItems = rawNav.filter((item) => {
+    if (!item.roles || !teamRole) return true;
+    return item.roles.includes(teamRole as any);
+  });
 
   function isActive(item: NavItem) {
     if (item.exact) return pathname === item.href;

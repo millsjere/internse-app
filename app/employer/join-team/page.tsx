@@ -53,6 +53,7 @@ export default function JoinTeamPage() {
                 onboardingStep: data.company.onboardingStep || 'complete',
                 mustSetPassword: data.company.mustSetPassword ?? true,
                 verified: data.company.verified ?? true,
+                teamRole: data.company.teamRole ?? data.role,
               } as any,
               'company',
               data.tokenExpiry
