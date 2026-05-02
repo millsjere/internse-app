@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Users, Building2, Briefcase,
-  CreditCard, Mail, LogOut,
+  CreditCard, Settings, LogOut,
 } from 'lucide-react';
 import { useAdminStore } from '@/lib/adminStore';
 import { adminApi } from '@/lib/adminApi';
@@ -43,8 +43,8 @@ const adminNav: NavGroup[] = [
   {
     label: 'Platform',
     items: [
-      { label: 'Pricing', href: '/admin/pricing', icon: CreditCard },
-      { label: 'Email',   href: '/admin/email',   icon: Mail },
+      { label: 'Pricing',  href: '/admin/pricing',  icon: CreditCard },
+      { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },
 ];
@@ -69,7 +69,7 @@ export function AdminSidebar() {
   return (
     <aside className="dash-sidebar">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 h-16 border-b border-white/8 flex-shrink-0">
+      <div className="flex items-center gap-3 px-5 h-16 border-gray-200 flex-shrink-0">
         <Link href="/admin/overview" className="flex items-center gap-2.5">
           <Image
             src="/images/internse-logo.png"
@@ -119,16 +119,14 @@ export function AdminSidebar() {
       </nav>
 
       {/* Admin profile + logout */}
-      <div className="flex-shrink-0 border-t border-white/8 p-3">
+      <div className="flex-shrink-0 p-3">
         <div className="flex items-center gap-3 px-2 py-2">
           <div className="w-8 h-8 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-400 text-xs font-bold flex-shrink-0">
             {admin?.name?.[0]?.toUpperCase() ?? 'A'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">{admin?.name ?? 'Admin'}</p>
-            <p className="text-xs text-gray-500 truncate capitalize">
-              {admin?.role === 'super_admin' ? 'Super Admin' : (admin?.role ?? 'Admin')}
-            </p>
+            <p className="text-xs text-gray-500 truncate">{admin?.email ?? 'super_admin'}</p>
           </div>
           <button
             onClick={handleLogout}

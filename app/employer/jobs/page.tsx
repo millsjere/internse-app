@@ -277,7 +277,9 @@ export default function EmployerJobsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-3 mb-1.5 flex-wrap">
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-lg leading-snug">{job.title}</h3>
+                    <Link href={`/employer/jobs/${job._id}`} className="font-semibold text-gray-900 dark:text-white text-lg leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                        {job.title}
+                      </Link>
                     {jobStatusBadge(job.status)}
                   </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
@@ -339,19 +341,17 @@ export default function EmployerJobsPage() {
                       <Users className="w-3.5 h-3.5" /> Applicants
                     </Link>
                   )}
+                  <Link href={`/employer/jobs/post?edit=${job._id}`} className="btn btn-ghost btn-icon" title="Edit job">
+                    <Edit2 className="w-4 h-4" />
+                  </Link>
                   {job.status !== 'published' && (
-                    <>
-                      <Link href={`/employer/jobs/post?edit=${job._id}`} className="btn btn-ghost btn-icon">
-                        <Edit2 className="w-4 h-4" />
-                      </Link>
-                      <button
-                        onClick={() => setDeleteTarget(job)}
-                        disabled={deletingId === job._id}
-                        className="btn btn-danger btn-icon"
-                      >
-                        {deletingId === job._id ? <Spinner size="sm" /> : <Trash2 className="w-4 h-4" />}
-                      </button>
-                    </>
+                    <button
+                      onClick={() => setDeleteTarget(job)}
+                      disabled={deletingId === job._id}
+                      className="btn btn-danger btn-icon"
+                    >
+                      {deletingId === job._id ? <Spinner size="sm" /> : <Trash2 className="w-4 h-4" />}
+                    </button>
                   )}
                 </div>
               </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { Search, ChevronLeft, ChevronRight, Star, StarOff, XCircle, Trash2 } from 'lucide-react';
 import { adminApi } from '@/lib/adminApi';
 import toast from 'react-hot-toast';
@@ -130,7 +131,11 @@ export default function JobsPage() {
               ) : (
                 data?.jobs?.map((job: any) => (
                   <tr key={job._id} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                    <td className="px-5 py-3.5 font-medium text-gray-900 dark:text-white max-w-[200px] truncate">{job.title}</td>
+                    <td className="px-5 py-3.5 max-w-[200px]">
+                      <Link href={`/admin/jobs/${job._id}`} className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 truncate block transition-colors">
+                        {job.title}
+                      </Link>
+                    </td>
                     <td className="px-5 py-3.5 text-gray-500 dark:text-gray-400 max-w-[150px] truncate">{job.company?.companyName || '—'}</td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${statusColors[job.status] || statusColors.draft}`}>

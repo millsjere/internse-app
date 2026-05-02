@@ -42,7 +42,8 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
     // Set-password route is safe to access once authenticated
     if (isSetPasswordRoute) return;
 
-    if (!isOnboardingRoute && step !== 'complete') {
+    // Team members (with teamRole) are added to an existing company and never need onboarding
+    if (!teamRole && !isOnboardingRoute && step !== 'complete') {
       router.push('/employer/onboarding');
       return;
     }

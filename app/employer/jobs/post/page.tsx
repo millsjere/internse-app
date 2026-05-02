@@ -49,6 +49,7 @@ export default function PostJobPage() {
 
   const [form, setForm] = useState<JobForm>(defaultForm);
   const [questions, setQuestions] = useState<JobQuestion[]>([]);
+  const [jobStatus, setJobStatus] = useState<string>('drafted');
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -61,6 +62,7 @@ export default function PostJobPage() {
         if (res.success && Array.isArray(res.data)) {
           const job = res.data.find((j: any) => j._id === editId);
           if (job) {
+            setJobStatus(job.status ?? 'drafted');
             setForm({
               title: job.title ?? '',
               description: job.description ?? '',
@@ -160,7 +162,15 @@ export default function PostJobPage() {
         if (!createRes.success) { toast.error(createRes.message || 'Failed to create'); return; }
         jobId = createRes.data?._id;
       } else {
-        await apiClient.updateJob(editId!, payload);
+        const updateRes = await apiClient.updateJob(editId!, payload);
+        if (!updateRes.success) { toast.error(updateRes.message || 'Failed to update'); return; }
+      }
+
+      // If already published, the update is sufficient — no need to re-publish
+      if (jobStatus === 'published') {
+        toast.success('Job updated');
+        router.push('/employer/jobs');
+        return;
       }
 
       if (jobId) {
@@ -374,18 +384,26 @@ export default function PostJobPage() {
         {/* Sidebar actions */}
         <div className="space-y-4">
           <div className="card">
-            <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Publish</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white mb-4">
+              {jobStatus === 'published' ? 'Update Job' : 'Publish'}
+            </h2>
             <div className="space-y-3">
               <button onClick={handlePublish} disabled={publishing || saving} className="btn btn-primary w-full">
-                {publishing ? <Spinner size="sm" /> : <Globe className="w-4 h-4" />}
-                {isEditing ? 'Save & Publish' : 'Publish Job'}
+                {publishing ? <Spinner size="sm" /> : jobStatus === 'published' ? <Save className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                {jobStatus === 'published' ? 'Save Changes' : isEditing ? 'Save & Publish' : 'Publish Job'}
               </button>
-              <button onClick={handleSaveDraft} disabled={saving || publishing} className="btn btn-outline w-full">
-                {saving ? <Spinner size="sm" /> : <Save className="w-4 h-4" />}
-                Save as Draft
-              </button>
+              {jobStatus !== 'published' && (
+                <button onClick={handleSaveDraft} disabled={saving || publishing} className="btn btn-outline w-full">
+                  {saving ? <Spinner size="sm" /> : <Save className="w-4 h-4" />}
+                  Save as Draft
+                </button>
+              )}
             </div>
-            <p className="text-xs text-gray-400 mt-3">Drafts are only visible to you. Publish to make the job visible to candidates.</p>
+            <p className="text-xs text-gray-400 mt-3">
+              {jobStatus === 'published'
+                ? 'Changes will be applied immediately to the live listing.'
+                : 'Drafts are only visible to you. Publish to make the job visible to candidates.'}
+            </p>
           </div>
 
           <div className="card bg-blue-50 dark:bg-blue-950 border-blue-100 dark:border-blue-900">

@@ -83,6 +83,11 @@ class AdminApiClient {
     return res.data;
   }
 
+  async createUser(data: { firstname: string; lastname: string; email: string; password: string }) {
+    const res = await this.client.post('/users', data);
+    return res.data;
+  }
+
   async getUserDetail(id: string) {
     const res = await this.client.get(`/users/${id}`);
     return res.data;
@@ -106,6 +111,11 @@ class AdminApiClient {
   // ─── Companies ───────────────────���──────────────────────
   async getCompanies(params?: { page?: number; limit?: number; search?: string; planType?: string; verified?: boolean; suspended?: boolean }) {
     const res = await this.client.get('/companies', { params });
+    return res.data;
+  }
+
+  async createCompany(data: { companyName: string; email: string; password: string }) {
+    const res = await this.client.post('/companies', data);
     return res.data;
   }
 
@@ -137,6 +147,11 @@ class AdminApiClient {
   // ─── Jobs ─────────────────────────────��──────────────────
   async getJobs(params?: { page?: number; limit?: number; search?: string; status?: string; featured?: boolean; company?: string }) {
     const res = await this.client.get('/jobs', { params });
+    return res.data;
+  }
+
+  async getJobDetail(id: string) {
+    const res = await this.client.get(`/jobs/${id}`);
     return res.data;
   }
 
@@ -176,14 +191,14 @@ class AdminApiClient {
     return res.data;
   }
 
-  // ─── Email ──────────────────────��────────────────────────
-  async sendBroadcast(data: { segment: string; subject: string; html: string }) {
-    const res = await this.client.post('/email/broadcast', data);
+  // ─── Settings ────────────────────────────────────────────
+  async updateProfile(data: { name?: string; email?: string }) {
+    const res = await this.client.patch('/auth/profile', data);
     return res.data;
   }
 
-  async sendDirectEmail(data: { recipientId: string; recipientType: 'user' | 'company'; subject: string; html: string }) {
-    const res = await this.client.post('/email/direct', data);
+  async updatePassword(data: { currentPassword: string; newPassword: string }) {
+    const res = await this.client.patch('/auth/password', data);
     return res.data;
   }
 

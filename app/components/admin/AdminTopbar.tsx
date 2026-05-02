@@ -11,7 +11,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/companies': 'Companies',
   '/admin/jobs':      'Jobs',
   '/admin/pricing':   'Pricing',
-  '/admin/email':     'Email',
+  '/admin/settings':  'Settings',
 };
 
 function getPageTitle(pathname: string): string {
@@ -63,9 +63,7 @@ export function AdminTopbar() {
           </div>
           <div className="hidden sm:block">
             <p className="text-sm font-semibold text-gray-900 dark:text-white leading-none">{admin?.name ?? 'Admin'}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 capitalize">
-              {admin?.role === 'super_admin' ? 'Super Admin' : (admin?.role ?? 'Admin')}
-            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{admin?.email ?? ''}</p>
           </div>
         </div>
       </div>
