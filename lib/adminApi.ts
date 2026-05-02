@@ -1,15 +1,34 @@
 import axios, { AxiosInstance } from 'axios';
 
 const ADMIN_TOKEN_KEY = 'admin_jwt';
+// A non-httpOnly cookie the Next.js middleware can read (middleware can't access localStorage)
+const ADMIN_AUTH_COOKIE = 'admin_auth';
+
+const setCookie = (name: string, value: string, days = 7) => {
+  if (typeof document === 'undefined') return;
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${value}; path=/; expires=${expires}; SameSite=Lax`;
+};
+
+const deleteCookie = (name: string) => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+};
 
 export const getAdminToken = () =>
   typeof window !== 'undefined' ? localStorage.getItem(ADMIN_TOKEN_KEY) : null;
 
-export const setAdminToken = (token: string) =>
-  typeof window !== 'undefined' && localStorage.setItem(ADMIN_TOKEN_KEY, token);
+export const setAdminToken = (token: string) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(ADMIN_TOKEN_KEY, token);
+  setCookie(ADMIN_AUTH_COOKIE, '1');   // readable by Next.js middleware
+};
 
-export const clearAdminToken = () =>
-  typeof window !== 'undefined' && localStorage.removeItem(ADMIN_TOKEN_KEY);
+export const clearAdminToken = () => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+  deleteCookie(ADMIN_AUTH_COOKIE);
+};
 
 class AdminApiClient {
   private client: AxiosInstance;

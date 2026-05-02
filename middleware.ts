@@ -16,7 +16,9 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // ── Admin route guards ────────────────────────────────────
-  const adminCookie = request.cookies.get('admin_jwt');
+  // admin_jwt is httpOnly and set on the API domain — not accessible here in production.
+  // admin_auth is a non-httpOnly presence cookie set by the frontend JS after successful login.
+  const adminCookie = request.cookies.get('admin_auth');
   const isAdminAuthenticated = !!adminCookie;
 
   const isAdminProtected = adminProtectedRoutes.some(r => pathname.startsWith(r));
