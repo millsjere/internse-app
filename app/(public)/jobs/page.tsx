@@ -328,9 +328,12 @@ function JobsContent() {
       const filters: Record<string, string> = {};
       if (debouncedSearch) filters.search = debouncedSearch;
       if (selectedIndustry) filters.industry = selectedIndustry;
-      // API accepts a single jobType; if multiple selected, filter client-side after
-      if (selectedTypes.length === 1) filters.jobType = selectedTypes[0];
-      if (selectedLevels.length === 1) filters.level = selectedLevels[0];
+      // Normalize to lowercase-hyphenated to match DB enum values
+      if (selectedTypes.length === 1) filters.jobType = selectedTypes[0].toLowerCase().replace(/ /g, '-');
+      if (selectedLevels.length === 1) filters.level = selectedLevels[0].toLowerCase();
+      // For multiple selections, send comma-separated — backend will handle OR logic
+      if (selectedTypes.length > 1) filters.jobType = selectedTypes.map(t => t.toLowerCase().replace(/ /g, '-')).join(',');
+      if (selectedLevels.length > 1) filters.level = selectedLevels.map(l => l.toLowerCase()).join(',');
 
       const res = await apiClient.getJobs(1, 100, filters);
       if (res.success && res.data?.jobs) {
@@ -346,10 +349,8 @@ function JobsContent() {
 
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
-  // Client-side pass for multi-select and remoteOnly (not supported server-side)
+  // Client-side pass for remoteOnly (compare case-insensitively for safety)
   const filtered = jobs.filter((job) => {
-    if (selectedTypes.length > 1 && !selectedTypes.includes(job.jobType)) return false;
-    if (selectedLevels.length > 1 && !selectedLevels.includes(job.level)) return false;
     if (remoteOnly && !job.remote) return false;
     return true;
   });
