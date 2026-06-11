@@ -15,19 +15,7 @@ class ApiClient {
       },
     });
 
-    // Add request interceptor to include JWT token
-    this.client.interceptors.request.use((config) => {
-      // Try to get token from localStorage (both user and company tokens)
-      const token = typeof window !== 'undefined' 
-        ? localStorage.getItem('cid_jwt') || localStorage.getItem('uid_jwt')
-        : null;
-
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-
-      return config;
-    });
+    // Add request interceptor — no need to manually include JWT token since withCredentials: true sends HTTP-only cookies automatically
 
     // Add response interceptor with token refresh logic
     this.client.interceptors.response.use(
