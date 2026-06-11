@@ -39,6 +39,8 @@ export default function ProfilePage() {
   const [eduModal, setEduModal] = useState<{ open: boolean; data: Partial<IEducation>; editId: string | null }>({ open: false, data: emptyEdu, editId: null });
   const [savingEdu, setSavingEdu] = useState(false);
 
+  const [uploadingResume, setUploadingResume] = useState(false);
+
   const completion = userData?.profileCompletion ?? 0;
 
   const init = useCallback(() => {
@@ -127,6 +129,26 @@ export default function ProfilePage() {
       if (res.success) { toast.success('Deleted'); if (res.data) setUser(res.data, 'user'); }
       else toast.error(res.message || 'Failed to delete');
     } catch { toast.error('Something went wrong'); }
+  }
+
+  async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingResume(true);
+    try {
+      const res = await apiClient.uploadUserResume(file);
+      if (res.success) {
+        toast.success('Resume uploaded');
+        if (res.data) setUser(res.data, 'user');
+      } else {
+        toast.error(res.message || 'Failed to upload resume');
+      }
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setUploadingResume(false);
+      e.target.value = '';
+    }
   }
 
   const fullName = `${userData?.firstname ?? ''} ${userData?.lastname ?? ''}`.trim();
@@ -303,17 +325,36 @@ export default function ProfilePage() {
         {/* Resume */}
         <div className="card">
           <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4"><FileText className="w-4 h-4 text-gray-400" /> Resume</h2>
-          {userData?.resume ? (
-            <div className="flex items-center gap-3">
-              <a href={userData.resume} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 flex-1 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-colors group">
+          <div className="space-y-3">
+            {userData?.resume && (
+              <a href={userData.resume} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-colors group">
                 <FileText className="w-5 h-5 text-blue-500" />
                 <span className="text-sm font-medium text-gray-900 dark:text-white">View current resume</span>
               </a>
+            )}
+            <div>
+              <label htmlFor="resume-upload" className="cursor-pointer">
+                <input
+                  id="resume-upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleResumeUpload}
+                  disabled={uploadingResume}
+                  className="hidden"
+                />
+                <div className="flex items-center justify-center p-4 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-colors bg-gray-50 dark:bg-gray-800/50">
+                  {uploadingResume ? (
+                    <Spinner size="sm" />
+                  ) : (
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Click to upload or drag resume (PDF, DOC, DOCX)</span>
+                  )}
+                </div>
+              </label>
             </div>
-          ) : (
-            <p className="text-sm text-gray-400">No resume uploaded yet</p>
-          )}
-          <p className="text-xs text-gray-400 mt-3">Upload a new resume to replace the current one (PDF recommended)</p>
+            {!userData?.resume && (
+              <p className="text-xs text-gray-400">No resume uploaded yet</p>
+            )}
+          </div>
         </div>
       </div>
 

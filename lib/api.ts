@@ -286,7 +286,7 @@ class ApiClient {
   async uploadUserResume(file: File): Promise<ApiResponse> {
     const formData = new FormData();
     formData.append('resume', file);
-    const response = await this.client.patch('/u/account/resume', formData, {
+    const response = await this.client.patch('/user/profile/resume', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
