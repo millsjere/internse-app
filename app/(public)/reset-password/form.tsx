@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Lock, Eye, EyeOff, ArrowRight, Briefcase, ArrowLeft, CheckCircle, Mail } from 'lucide-react';
+import { Lock, Eye, EyeOff, ArrowRight, CheckCircle } from 'lucide-react';
 import { ThemeToggler } from '@/app/components/ThemeToggler';
 import { AuthCarousel } from '@/app/components/AuthCarousel';
 
@@ -179,19 +179,16 @@ export default function ResetPasswordForm() {
             {/* Email Field */}
             <div>
               <label className="label">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 dark:text-gray-600 pointer-events-none" />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`input pl-12 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
-                    errors.email ? 'border-red-500 focus:ring-red-500' : ''
-                  }`}
-                  placeholder="you@example.com"
-                />
-              </div>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`input dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                  errors.email ? 'border-red-500 focus:ring-red-500' : ''
+                }`}
+                placeholder="you@example.com"
+              />
               {errors.email && (
                 <p className="text-red-500 text-sm mt-2">{errors.email}</p>
               )}
@@ -201,13 +198,12 @@ export default function ResetPasswordForm() {
             <div>
               <label className="label">New Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 dark:text-gray-600 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`input pl-12 pr-12 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                  className={`input pr-12 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
                     errors.password ? 'border-red-500 focus:ring-red-500' : ''
                   }`}
                   placeholder="••••••••"
@@ -236,13 +232,12 @@ export default function ResetPasswordForm() {
             <div>
               <label className="label">Confirm Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 dark:text-gray-600 pointer-events-none" />
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`input pl-12 pr-12 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                  className={`input pr-12 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
                     errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : ''
                   }`}
                   placeholder="••••••••"

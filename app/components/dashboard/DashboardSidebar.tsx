@@ -31,7 +31,7 @@ const userNav: NavItem[] = [
   { label: 'Overview',     href: '/dashboard',    icon: LayoutDashboard, exact: true },
   { label: 'Profile',      href: '/profile',      icon: User },
   { label: 'Applications', href: '/applications', icon: FileText },
-  { label: 'Saved Jobs',   href: '/favorites',    icon: Heart },
+  { label: 'Saved Opportunities',   href: '/favorites',    icon: Heart },
   { label: 'Settings',     href: '/settings',     icon: Settings },
 ];
 

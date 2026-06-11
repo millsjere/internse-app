@@ -7,7 +7,7 @@ import { apiClient } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight, Check, Zap, Users, Target, BarChart3,
-  FileText, Bell, Briefcase, Star,
+  FileText, Bell, Briefcase, Star, Globe,
   ChevronLeft, ChevronRight, Search,
   Code2, Palette, HeartPulse, GraduationCap, Megaphone, PenTool,
   Cog, TrendingUp, Scale, Wrench, Layers,
@@ -18,8 +18,8 @@ const heroSlides = [
   {
     image: '/images/hero/hero-1.jpg',
     badge: '10,000+ new jobs posted this week',
-    heading: 'Launch Your Career\nFaster Than Ever',
-    sub: 'Access thousands of internship opportunities at top companies. Apply with one click and land your dream role in days, not months.',
+    heading: 'Connecting Young People to Opportunities',
+    sub: 'Discover internships, jobs, fellowships, volunteer programmes, and career-building opportunities for young people worldwide.',
   },
   {
     image: '/images/hero/hero-2.jpg',
@@ -65,12 +65,6 @@ const features = [
   { icon: Users, title: 'Community', desc: 'Connect with peers, share tips, and learn from success stories.', color: 'bg-orange-100 text-orange-600' },
 ];
 
-const testimonials = [
-  { name: 'Sarah Johnson', role: 'Software Engineer Intern @ Google', text: 'Found my dream internship in 2 weeks. The smart matching is genuinely impressive — every recommendation felt tailored.', rating: 5 },
-  { name: 'Michael Chen', role: 'Business Analyst Intern @ McKinsey', text: 'The one-click apply saved me hours. I sent 30 applications in a single afternoon and heard back from 8.', rating: 5 },
-  { name: 'Emma Rodriguez', role: 'Product Design Intern @ Microsoft', text: 'Real-time alerts meant I was always first to apply. Landed an offer before the job even went viral on LinkedIn.', rating: 5 },
-];
-
 const companies = ['Stripe', 'Airbnb', 'Figma', 'HubSpot', 'Notion', 'Vercel', 'Linear', 'Loom'];
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -84,6 +78,7 @@ export default function HomeContent() {
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const [heroSearch, setHeroSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [pricingPlans, setPricingPlans] = useState<any[]>([]);
 
   useEffect(() => {
@@ -98,7 +93,10 @@ export default function HomeContent() {
   function handleHeroSearch(e: React.FormEvent) {
     e.preventDefault();
     const q = heroSearch.trim();
-    router.push(q ? `/jobs?q=${encodeURIComponent(q)}` : '/jobs');
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (selectedCategory) params.set('category', selectedCategory.toLowerCase());
+    router.push(`/jobs${params.size > 0 ? '?' + params.toString() : ''}`);
   }
 
   useEffect(() => {
@@ -156,23 +154,43 @@ export default function HomeContent() {
               </p>
 
               {/* Search bar */}
-              <form onSubmit={handleHeroSearch} className="flex items-center gap-0 mb-6 max-w-xl">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={heroSearch}
-                    onChange={(e) => setHeroSearch(e.target.value)}
-                    placeholder="Search role, company, or skill..."
-                    className="w-full pl-12 pr-4 py-4 rounded-l-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-xl text-base"
-                  />
+              <form onSubmit={handleHeroSearch} className="mb-6 max-w-xl">
+                <div className="flex items-center gap-0 mb-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={heroSearch}
+                      onChange={(e) => setHeroSearch(e.target.value)}
+                      placeholder="Search role, company, or skill..."
+                      className="w-full pl-12 pr-4 py-4 rounded-l-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-xl text-base"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-r-2xl shadow-xl transition-all duration-200 active:scale-95 flex-shrink-0"
+                  >
+                    Search
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-r-2xl shadow-xl transition-all duration-200 active:scale-95 flex-shrink-0"
-                >
-                  Search
-                </button>
+
+                {/* Category selector */}
+                <div className="flex flex-wrap gap-2">
+                  {['Internship', 'Volunteer', 'Fellowship'].map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setSelectedCategory(selectedCategory === cat ? '' : cat)}
+                      className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                        selectedCategory === cat
+                          ? 'bg-white text-blue-700 border-white shadow-md'
+                          : 'bg-white/20 text-white border-white/40 hover:bg-white/30'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
               </form>
 
             </div>
@@ -215,10 +233,10 @@ export default function HomeContent() {
         <div className="absolute bottom-0 left-0 right-0 z-30 bg-black/30 backdrop-blur-md border-t border-white/10">
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-16 py-4 flex flex-wrap justify-center sm:justify-start gap-8">
             {[
-              { value: '10,000+', label: 'Active Jobs' },
-              { value: '500+', label: 'Top Companies' },
-              { value: '50,000+', label: 'Job Seekers' },
-              { value: '95%', label: 'Success Rate' },
+              { value: '10,000+', label: 'Volunteer Programmes' },
+              { value: '500+', label: 'Internships' },
+              { value: '5,000+', label: 'Jobs' },
+              { value: '1,000+', label: 'Fellowships' },
             ].map((stat) => (
               <div key={stat.label} className="text-center sm:text-left">
                 <div className="text-xl font-extrabold text-white">{stat.value}</div>
@@ -277,10 +295,10 @@ export default function HomeContent() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {[
-                  { step: '01', icon: FileText, title: 'Create Account', desc: 'Sign up in 30 seconds. No credit card needed.', color: 'from-blue-500 to-blue-600' },
-                  { step: '02', icon: Users, title: 'Build Your Profile', desc: 'Add skills, experience, and your CV in 2 minutes.', color: 'from-violet-500 to-violet-600' },
-                  { step: '03', icon: Briefcase, title: 'Browse & Apply', desc: 'Find roles you love and apply with one click.', color: 'from-pink-500 to-pink-600' },
-                  { step: '04', icon: Star, title: 'Get Hired', desc: 'Land interviews and start your career journey.', color: 'from-amber-500 to-orange-500' },
+                  { step: '01', icon: FileText, title: 'Create Account', desc: 'Join the platform in under a minute', color: 'from-blue-500 to-blue-600' },
+                  { step: '02', icon: Users, title: 'Build Your Profile', desc: 'Showcase your skills, interests, and experience', color: 'from-violet-500 to-violet-600' },
+                  { step: '03', icon: Briefcase, title: 'Explore Opportunities', desc: 'Discover internships, jobs, volunteer programmes, and fellowships tailored to your goals', color: 'from-pink-500 to-pink-600' },
+                  { step: '04', icon: Star, title: 'Launch Your Journey', desc: 'Start your career, volunteer experience, or leadership pathway', color: 'from-amber-500 to-orange-500' },
                 ].map((item, idx) => (
                   <div key={idx} className="relative bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                     <span className="absolute top-4 right-4 text-xs font-bold text-gray-300 dark:text-gray-600">{item.step}</span>
@@ -297,13 +315,13 @@ export default function HomeContent() {
             {/* Right — image */}
             <div className="relative h-[480px] lg:h-[560px] rounded-3xl overflow-hidden shadow-2xl">
               <Image
-                src="/images/marketing/team-work.jpg"
+                src="/images/marketing/opportunity.png"
                 alt="Team collaborating"
                 fill
                 className="object-cover object-center"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
 
           </div>
@@ -332,40 +350,44 @@ export default function HomeContent() {
         </div>
       </section>
 
-      {/* ── Testimonials ─────────────────────────────────── */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-blue-600">
+      {/* ── Why Internse ───────────────────────────────────── */}
+      <section className="pb-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-16">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-extrabold text-white mb-4">Real Stories, Real Results</h2>
-            <p className="text-lg text-blue-100 max-w-xl mx-auto">Join 50,000+ students who launched their careers with Internse.</p>
+            <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">Why Internse?</h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Everything you need to discover and land meaningful opportunities that match your ambitions.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t) => (
-              <div key={t.name} className="bg-white rounded-2xl p-6 shadow-xl">
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-gray-700 text-base leading-relaxed mb-5 italic">&ldquo;{t.text}&rdquo;</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">{t.name}</p>
-                    <p className="text-xs text-gray-500">{t.role}</p>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="rounded-2xl p-8 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 border border-blue-200 dark:border-blue-800">
+              <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center mb-5">
+                <Globe className="w-6 h-6" />
               </div>
-            ))}
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Global Opportunities</h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">Access internships, jobs, fellowships, and volunteer programmes from organisations worldwide.</p>
+            </div>
+
+            <div className="rounded-2xl p-8 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-900/10 border border-indigo-200 dark:border-indigo-800">
+              <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center mb-5">
+                <GraduationCap className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Built for Young People</h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">Designed to help students and emerging professionals discover meaningful opportunities.</p>
+            </div>
+
+            <div className="rounded-2xl p-8 bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-900/10 border border-violet-200 dark:border-violet-800">
+              <div className="w-12 h-12 rounded-xl bg-violet-600 text-white flex items-center justify-center mb-5">
+                <Briefcase className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">More Than a Job Board</h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">Explore leadership programmes, career pathways, and opportunities for growth.</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── Pricing Preview ───────────────────────────────── */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
+      {/* <section className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-16">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
             <div>
@@ -428,7 +450,7 @@ export default function HomeContent() {
             })}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ── Final CTA ─────────────────────────────────────── */}
       <section className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -445,7 +467,7 @@ export default function HomeContent() {
             Ready to Land Your Next Opportunity?
           </h2>
           <p className="text-xl text-blue-100 mb-10">
-            Join 50,000+ students already using Internse. Your dream role is one click away.
+            Explore opportunities designed to help young people grow, lead, and succeed.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -458,7 +480,7 @@ export default function HomeContent() {
               href="/jobs"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-bold text-white border-2 border-white/30 hover:bg-white/10 rounded-2xl transition-all duration-200"
             >
-              Browse Jobs
+              Browse Opportunities <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
         </div>

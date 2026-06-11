@@ -24,6 +24,7 @@ interface JobForm {
   tags: string;
   industry: string;
   jobType: string;
+  category: string;
   level: string;
   location: string;
   remote: boolean;
@@ -35,7 +36,7 @@ interface JobForm {
 const defaultForm: JobForm = {
   title: '', description: '', requirements: '', responsibilities: '',
   benefits: '', tags: '', industry: '',
-  jobType: 'full-time', level: 'entry', location: '',
+  jobType: 'full-time', category: 'internship', level: 'entry', location: '',
   remote: false, salaryMin: '', salaryMax: '', currency: 'USD',
 };
 
@@ -72,6 +73,7 @@ export default function PostJobPage() {
               tags: (job.tags ?? []).join(', '),
               industry: job.industry ?? '',
               jobType: job.jobType ?? 'full-time',
+              category: job.category ?? 'internship',
               level: job.level ?? 'entry',
               location: job.location ?? '',
               remote: job.remote ?? false,
@@ -111,6 +113,7 @@ export default function PostJobPage() {
       tags: form.tags.split(',').map((s) => s.trim()).filter(Boolean),
       industry: form.industry,
       jobType: form.jobType,
+      category: form.category,
       level: form.level,
       location: form.location,
       remote: form.remote,
@@ -265,6 +268,14 @@ export default function PostJobPage() {
                   <option value="part-time">Part-time</option>
                   <option value="contract">Contract</option>
                   <option value="internship">Internship</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Category</label>
+                <select className="input" value={form.category} onChange={(e) => set('category', e.target.value)}>
+                  <option value="internship">Internship</option>
+                  <option value="volunteer">Volunteer</option>
+                  <option value="fellowship">Fellowship</option>
                 </select>
               </div>
               <div>

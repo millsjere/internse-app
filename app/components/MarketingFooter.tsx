@@ -10,7 +10,7 @@ const footerLinks = {
     // { label: 'Blog', href: '#' },
   ],
   jobSeekers: [
-    { label: 'Browse Jobs', href: '/jobs' },
+    { label: 'Browse Opportunities', href: '/jobs' },
     { label: 'Create Profile', href: '/register' },
     // { label: 'Career Resources', href: '#' },
     // { label: 'Salary Guide', href: '#' },

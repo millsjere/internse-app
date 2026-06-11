@@ -20,7 +20,7 @@ export default function UserSettingsPage() {
   const userData = user as IUser | null;
   const [tab, setTab] = useState<Tab>('account');
 
-  const [profile, setProfile] = useState({ firstname: '', lastname: '', email: '', phone: '' });
+  const [profile, setProfile] = useState({ firstname: '', lastname: '', email: '', phone: '', country: '' });
   const [savingProfile, setSavingProfile] = useState(false);
 
   const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
@@ -31,7 +31,7 @@ export default function UserSettingsPage() {
 
   useEffect(() => {
     if (userData) {
-      setProfile({ firstname: userData.firstname ?? '', lastname: userData.lastname ?? '', email: userData.email ?? '', phone: userData.phone ?? '' });
+      setProfile({ firstname: userData.firstname ?? '', lastname: userData.lastname ?? '', email: userData.email ?? '', phone: userData.phone ?? '', country: userData.country ?? '' });
     }
   }, [userData]);
 
@@ -123,6 +123,42 @@ export default function UserSettingsPage() {
                 <div>
                   <label className="label">Phone</label>
                   <input type="tel" className="input" value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Country</label>
+                  <select className="input" value={profile.country} onChange={(e) => setProfile((p) => ({ ...p, country: e.target.value }))}>
+                    <option value="">Select a country</option>
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Germany">Germany</option>
+                    <option value="France">France</option>
+                    <option value="India">India</option>
+                    <option value="Nigeria">Nigeria</option>
+                    <option value="Kenya">Kenya</option>
+                    <option value="South Africa">South Africa</option>
+                    <option value="Ghana">Ghana</option>
+                    <option value="Egypt">Egypt</option>
+                    <option value="Singapore">Singapore</option>
+                    <option value="Japan">Japan</option>
+                    <option value="China">China</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Mexico">Mexico</option>
+                    <option value="Argentina">Argentina</option>
+                    <option value="Spain">Spain</option>
+                    <option value="Italy">Italy</option>
+                    <option value="Netherlands">Netherlands</option>
+                    <option value="Sweden">Sweden</option>
+                    <option value="Norway">Norway</option>
+                    <option value="Switzerland">Switzerland</option>
+                    <option value="New Zealand">New Zealand</option>
+                    <option value="Ireland">Ireland</option>
+                    <option value="South Korea">South Korea</option>
+                    <option value="Malaysia">Malaysia</option>
+                    <option value="Pakistan">Pakistan</option>
+                    <option value="Bangladesh">Bangladesh</option>
+                  </select>
                 </div>
               </div>
 

@@ -36,6 +36,7 @@ interface Job {
 
 const JOB_TYPES = ['Full-time', 'Part-time', 'Internship', 'Contract', 'Hybrid'];
 const LEVELS = ['Entry', 'Mid', 'Senior'];
+const JOB_CATEGORIES = ['Internship', 'Volunteer', 'Fellowship'];
 
 const TYPE_COLORS: Record<string, string> = {
   Internship: 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900',
@@ -214,7 +215,7 @@ function JobCard({ job, colorIndex, view = 'grid' }: { job: Job; colorIndex: num
   );
 }
 
-function FilterPanel({ selectedTypes, selectedLevels, selectedIndustry, remoteOnly, hasFilters, toggleType, toggleLevel, setSelectedIndustry, setRemoteOnly, clearFilters }: any) {
+function FilterPanel({ selectedTypes, selectedLevels, selectedCategories, selectedIndustry, remoteOnly, hasFilters, toggleType, toggleLevel, toggleCategory, setSelectedIndustry, setRemoteOnly, clearFilters }: any) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
@@ -227,6 +228,25 @@ function FilterPanel({ selectedTypes, selectedLevels, selectedIndustry, remoteOn
       </div>
 
       <div className="p-5 space-y-6">
+        <div>
+          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Category</p>
+          <div className="space-y-2.5">
+            {JOB_CATEGORIES.map((category) => (
+              <label key={category} className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedCategories.includes(category)}
+                  onChange={() => toggleCategory(category)}
+                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-800"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">{category}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="h-px bg-gray-100 dark:bg-gray-800" />
+
         <div>
           <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Job Type</p>
           <div className="space-y-2.5">
@@ -309,6 +329,7 @@ function JobsContent() {
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedIndustry, setSelectedIndustry] = useState(searchParams.get('industry') ?? '');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -331,9 +352,11 @@ function JobsContent() {
       // Normalize to lowercase-hyphenated to match DB enum values
       if (selectedTypes.length === 1) filters.jobType = selectedTypes[0].toLowerCase().replace(/ /g, '-');
       if (selectedLevels.length === 1) filters.level = selectedLevels[0].toLowerCase();
+      if (selectedCategories.length === 1) filters.category = selectedCategories[0].toLowerCase();
       // For multiple selections, send comma-separated — backend will handle OR logic
       if (selectedTypes.length > 1) filters.jobType = selectedTypes.map(t => t.toLowerCase().replace(/ /g, '-')).join(',');
       if (selectedLevels.length > 1) filters.level = selectedLevels.map(l => l.toLowerCase()).join(',');
+      if (selectedCategories.length > 1) filters.category = selectedCategories.map(c => c.toLowerCase()).join(',');
 
       const res = await apiClient.getJobs(1, 100, filters);
       if (res.success && res.data?.jobs) {
@@ -345,7 +368,7 @@ function JobsContent() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, selectedTypes, selectedLevels, selectedIndustry]);
+  }, [debouncedSearch, selectedTypes, selectedLevels, selectedCategories, selectedIndustry]);
 
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
@@ -357,9 +380,10 @@ function JobsContent() {
 
   const toggleType = (t: string) => setSelectedTypes((p) => p.includes(t) ? p.filter((x) => x !== t) : [...p, t]);
   const toggleLevel = (l: string) => setSelectedLevels((p) => p.includes(l) ? p.filter((x) => x !== l) : [...p, l]);
-  const clearFilters = () => { setSelectedTypes([]); setSelectedLevels([]); setSelectedIndustry(''); setRemoteOnly(false); };
-  const hasFilters = selectedTypes.length > 0 || selectedLevels.length > 0 || !!selectedIndustry || remoteOnly;
-  const activeFilterCount = selectedTypes.length + selectedLevels.length + (selectedIndustry ? 1 : 0) + (remoteOnly ? 1 : 0);
+  const toggleCategory = (c: string) => setSelectedCategories((p) => p.includes(c) ? p.filter((x) => x !== c) : [...p, c]);
+  const clearFilters = () => { setSelectedTypes([]); setSelectedLevels([]); setSelectedCategories([]); setSelectedIndustry(''); setRemoteOnly(false); };
+  const hasFilters = selectedTypes.length > 0 || selectedLevels.length > 0 || selectedCategories.length > 0 || !!selectedIndustry || remoteOnly;
+  const activeFilterCount = selectedTypes.length + selectedLevels.length + selectedCategories.length + (selectedIndustry ? 1 : 0) + (remoteOnly ? 1 : 0);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
   return (
@@ -415,6 +439,19 @@ function JobsContent() {
 
           {/* Quick filter pills */}
           <div className="flex flex-wrap gap-2 mt-5">
+            {JOB_CATEGORIES.map((category) => (
+              <button
+                key={category}
+                onClick={() => toggleCategory(category)}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${
+                  selectedCategories.includes(category)
+                    ? 'bg-white text-blue-700 border-white shadow-md'
+                    : 'bg-white/10 text-white border-white/25 hover:bg-white/20'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
             {JOB_TYPES.map((type) => (
               <button
                 key={type}
@@ -466,7 +503,7 @@ function JobsContent() {
 
         {sidebarOpen && (
           <div className="lg:hidden mb-6">
-            <FilterPanel {...{ selectedTypes, selectedLevels, selectedIndustry, remoteOnly, hasFilters, toggleType, toggleLevel, setSelectedIndustry, setRemoteOnly, clearFilters }} />
+            <FilterPanel {...{ selectedTypes, selectedLevels, selectedCategories, selectedIndustry, remoteOnly, hasFilters, toggleType, toggleLevel, toggleCategory, setSelectedIndustry, setRemoteOnly, clearFilters }} />
           </div>
         )}
 
@@ -474,7 +511,7 @@ function JobsContent() {
           {/* Sidebar */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
             <div className="sticky top-24">
-              <FilterPanel {...{ selectedTypes, selectedLevels, selectedIndustry, remoteOnly, hasFilters, toggleType, toggleLevel, setSelectedIndustry, setRemoteOnly, clearFilters }} />
+              <FilterPanel {...{ selectedTypes, selectedLevels, selectedCategories, selectedIndustry, remoteOnly, hasFilters, toggleType, toggleLevel, toggleCategory, setSelectedIndustry, setRemoteOnly, clearFilters }} />
             </div>
           </aside>
 
@@ -488,6 +525,12 @@ function JobsContent() {
                 </p>
                 {hasFilters && (
                   <div className="flex flex-wrap gap-1.5 mt-2">
+                    {selectedCategories.map((c) => (
+                      <span key={c} className="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900 px-2.5 py-1 rounded-full font-medium">
+                        {c}
+                        <button onClick={() => toggleCategory(c)}><X className="w-3 h-3" /></button>
+                      </span>
+                    ))}
                     {selectedTypes.map((t) => (
                       <span key={t} className="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900 px-2.5 py-1 rounded-full font-medium">
                         {t}

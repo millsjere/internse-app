@@ -47,7 +47,7 @@ export default function UserDashboardPage() {
     { label: 'Applications', value: applications.length, icon: FileText, color: 'bg-blue-50 dark:bg-blue-950', iconColor: 'text-blue-600 dark:text-blue-400', href: '/applications' },
     { label: 'Accepted',     value: accepted,             icon: CheckCircle, color: 'bg-emerald-50 dark:bg-emerald-950', iconColor: 'text-emerald-600 dark:text-emerald-400', href: '/applications' },
     { label: 'Pending',      value: pending,              icon: Clock,  color: 'bg-amber-50 dark:bg-amber-950', iconColor: 'text-amber-600 dark:text-amber-400', href: '/applications' },
-    { label: 'Saved Jobs',   value: favCount,             icon: Heart,  color: 'bg-pink-50 dark:bg-pink-950', iconColor: 'text-pink-600 dark:text-pink-400', href: '/favorites' },
+    { label: 'Saved Opportunities',   value: favCount,             icon: Heart,  color: 'bg-pink-50 dark:bg-pink-950', iconColor: 'text-pink-600 dark:text-pink-400', href: '/favorites' },
   ];
 
   return (
@@ -57,7 +57,7 @@ export default function UserDashboardPage() {
         description="Here's an overview of your job search activity."
         action={
           <Link href="/browse" className="btn btn-primary">
-            <Briefcase className="w-4 h-4" /> Browse Jobs
+            <Briefcase className="w-4 h-4" /> Browse Opportunities
           </Link>
         }
       />
@@ -115,8 +115,8 @@ export default function UserDashboardPage() {
               <FileText className="w-6 h-6 text-gray-400" />
             </div>
             <p className="font-medium text-gray-900 dark:text-white mb-1">No applications yet</p>
-            <p className="text-sm text-gray-500 mb-4">Start applying to jobs that match your skills.</p>
-            <Link href="/browse" className="btn btn-primary btn-sm">Browse Jobs</Link>
+            <p className="text-sm text-gray-500 mb-4">Start applying to opportunities that match your skills.</p>
+            <Link href="/browse" className="btn btn-primary btn-sm">Browse Opportunities</Link>
           </div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-800">

@@ -23,7 +23,7 @@ export default function FavoritesPage() {
       const res = await apiClient.getUserFavourites();
       if (res.success && Array.isArray(res.data)) setFavorites(res.data);
     } catch {
-      toast.error('Failed to load saved jobs');
+      toast.error('Failed to load saved opportunities');
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ export default function FavoritesPage() {
       const res = await apiClient.toggleFavourite(jobId);
       if (res.success) {
         setFavorites((prev) => prev.filter((f) => f._id !== favId));
-        toast.success('Removed from saved jobs');
+        toast.success('Removed from saved opportunities');
       } else {
         toast.error('Failed to remove');
       }
@@ -51,11 +51,11 @@ export default function FavoritesPage() {
   return (
     <div>
       <PageHeader
-        title="Saved Jobs"
-        description={favorites.length > 0 ? `${favorites.length} saved job${favorites.length !== 1 ? 's' : ''}` : 'Jobs you saved for later'}
+        title="Saved Opportunities"
+        description={favorites.length > 0 ? `${favorites.length} saved opportunity${favorites.length !== 1 ? 's' : ''}` : 'Opportunities you saved for later'}
         action={
           <Link href="/browse" className="btn btn-outline">
-            <Briefcase className="w-4 h-4" /> Browse Jobs
+            <Briefcase className="w-4 h-4" /> Browse Opportunities
           </Link>
         }
       />
@@ -68,17 +68,17 @@ export default function FavoritesPage() {
         <div className="card">
           <EmptyState
             icon={Bookmark}
-            title="No saved jobs yet"
-            description="Save jobs you're interested in so you can apply later."
+            title="No saved opportunities yet"
+            description="Save opportunities you're interested in so you can apply later."
             action={
               <Link href="/browse" className="btn btn-primary btn-sm">
-                <Briefcase className="w-3.5 h-3.5" /> Browse Jobs
+                <Briefcase className="w-3.5 h-3.5" /> Browse Opportunities
               </Link>
             }
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {favorites.map((fav) => {
             const job = fav.job;
             return (
@@ -114,7 +114,7 @@ export default function FavoritesPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Link href={`/jobs/${job.slug}`} className="btn btn-primary btn-sm flex-1">Apply Now</Link>
+                  <Link href={`/jobs/${job.slug}`} className="btn btn-primary btn-sm">Apply Now</Link>
                   <Link href={`/jobs/${job.slug}`} className="btn btn-ghost btn-icon btn-sm">
                     <ExternalLink className="w-4 h-4" />
                   </Link>

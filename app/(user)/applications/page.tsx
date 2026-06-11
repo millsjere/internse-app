@@ -58,7 +58,7 @@ export default function ApplicationsPage() {
         description={applications.length > 0 ? `${applications.length} total application${applications.length !== 1 ? 's' : ''}` : 'Track your job applications'}
         action={
           <Link href="/jobs" className="btn btn-primary">
-            <Briefcase className="w-4 h-4" /> Browse More Jobs
+            <Briefcase className="w-4 h-4" /> Browse Opportunities
           </Link>
         }
       />

@@ -4,6 +4,7 @@ export interface IUser {
   lastname: string;
   email: string;
   phone?: string;
+  country?: string;
   profilePhoto?: string;
   coverPhoto?: string;
   bio?: string;
@@ -81,6 +82,7 @@ export interface IJob {
   tags: string[];
   industry: string;
   jobType: 'full-time' | 'part-time' | 'contract' | 'internship';
+  category: 'internship' | 'volunteer' | 'fellowship';
   level: 'entry' | 'mid' | 'senior';
   salary?: {
     min?: number;
