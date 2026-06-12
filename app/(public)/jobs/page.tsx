@@ -395,27 +395,12 @@ function JobsContent() {
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900/85 via-blue-800/70 to-indigo-900/60" />
 
         <div className="relative z-10 max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-16">
-          {/* Stats row */}
-          {/* <div className="flex flex-wrap gap-6 mb-10">
-            {[
-              { icon: Briefcase, label: `${loading ? '...' : jobs.length + '+'}`, desc: 'Open Roles' },
-              { icon: Building2, label: '500+', desc: 'Companies' },
-              { icon: Users, label: '50k+', desc: 'Job Seekers' },
-              { icon: TrendingUp, label: '95%', desc: 'Success Rate' },
-            ].map(({ icon: Icon, label, desc }) => (
-              <div key={desc} className="flex items-center gap-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-2.5">
-                <Icon className="w-4 h-4 text-blue-300" />
-                <span className="font-bold text-white">{label}</span>
-                <span className="text-blue-200 text-sm">{desc}</span>
-              </div>
-            ))}
-          </div> */}
 
           <h1 className="text-5xl sm:text-6xl font-extrabold text-white mb-4 leading-tight max-w-2xl">
             Find Your Perfect Opportunity
           </h1>
           <p className="text-xl text-blue-100 mb-8 max-w-xl">
-            Browse thousands of internship and job opportunities from top companies, updated daily.
+            Explore opportunities that help you gain experience, build skills, create impact, and advance your career.
           </p>
 
           {/* Search bar */}

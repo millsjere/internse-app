@@ -23,21 +23,21 @@ const heroSlides = [
   },
   {
     image: '/images/hero/hero-2.jpg',
-    badge: '500+ top companies hiring now',
-    heading: 'Collaborate With\nWorld-Class Teams',
-    sub: 'Work alongside the brightest minds at leading companies. Build real skills, grow your network, and kick-start a career you are proud of.',
+    badge: 'Discover Opportunities That Matter',
+    heading: 'Build Skills. Gain Experience. Create Impact.',
+    sub: 'Explore internships, volunteer programmes, fellowships, and career opportunities tailored to your goals.',
   },
   {
     image: '/images/hero/hero-3.jpg',
-    badge: '95% placement success rate',
-    heading: 'Ace the Interview,\nLand the Offer',
-    sub: 'Get matched with roles that fit your skills, prep with expert resources, and walk into every interview with confidence.',
+    badge: 'Opportunities Across Sectors',
+    heading: 'Your Next Opportunity Starts Here',
+    sub: "Whether you're seeking experience, leadership opportunities, or your first professional role, Internse helps you take the next step.",
   },
   {
     image: '/images/hero/hero-4.jpg',
-    badge: '50,000+ students already hired',
-    heading: 'Your Dream Role\nStarts Here',
-    sub: 'From first application to signed offer — Internse guides you every step of the way. Join a community that is redefining early careers.',
+    badge: 'Connect With Leading Organisations',
+    heading: 'Learn, Contribute, and Grow',
+    sub: 'Join programmes offered by employers, NGOs, governments, and institutions committed to developing the next generation of talent.',
   },
 ];
 
@@ -176,7 +176,7 @@ export default function HomeContent() {
 
                 {/* Category selector */}
                 <div className="flex flex-wrap gap-2">
-                  {['Internship', 'Volunteer', 'Fellowship'].map((cat) => (
+                  {['Internship', 'Volunteer', 'Fellowship', 'Jobs', 'Leadership'].map((cat) => (
                     <button
                       key={cat}
                       type="button"
