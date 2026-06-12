@@ -72,11 +72,7 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
   }
 
   if (!isAuthenticated || userType !== 'company') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <Spinner size="lg" className="text-blue-500" />
-      </div>
-    );
+    return null;
   }
 
   // Onboarding and set-password pages render without the dashboard shell

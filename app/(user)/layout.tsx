@@ -12,9 +12,14 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!isInitialized || isLoading) return;
-    if (!isAuthenticated || userType !== 'user') router.push('/login');
+    
+    // If not authenticated or wrong user type, redirect to login
+    if (!isAuthenticated || userType !== 'user') {
+      router.push('/login');
+    }
   }, [isInitialized, isLoading, isAuthenticated, userType, router]);
 
+  // Show loading while auth is initializing
   if (!isInitialized || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
@@ -23,12 +28,9 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
+  // If not authenticated after init complete, show nothing (redirect is happening)
   if (!isAuthenticated || userType !== 'user') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <Spinner size="lg" className="text-blue-500" />
-      </div>
-    );
+    return null;
   }
 
   return <DashboardShell variant="user">{children}</DashboardShell>;
