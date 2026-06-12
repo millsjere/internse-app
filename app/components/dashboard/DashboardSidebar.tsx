@@ -42,7 +42,7 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ variant }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const { isSidebarOpen } = useUIStore();
+  const { isSidebarOpen, closeSidebar } = useUIStore();
   const teamRole = variant === 'employer' ? (user as ICompany | null)?.teamRole : undefined;
 
   const rawNav = variant === 'employer' ? employerNav : userNav;
@@ -74,6 +74,7 @@ export function DashboardSidebar({ variant }: DashboardSidebarProps) {
           <Link
             key={item.href}
             href={item.href}
+            onClick={closeSidebar}
             className={cn('sidebar-item', isActive(item) && 'sidebar-item-active')}
           >
             <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -86,6 +87,7 @@ export function DashboardSidebar({ variant }: DashboardSidebarProps) {
       <div className="flex-shrink-0 border-t border-white/10 px-3 py-3">
         <Link
           href="mailto:support@internse.com"
+          onClick={closeSidebar}
           className="sidebar-item"
         >
           <HelpCircle className="w-4 h-4 flex-shrink-0" />

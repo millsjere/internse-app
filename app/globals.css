@@ -137,7 +137,7 @@ body {
 }
 
 .dash-topbar {
-  @apply fixed top-0 right-0 z-20 h-16 bg-white border-b border-gray-100
+  @apply fixed top-0 right-0 z-40 h-16 bg-white border-b border-gray-100
          flex items-center justify-between px-6
          dark:bg-gray-900 dark:border-gray-800
          w-full md:left-60;

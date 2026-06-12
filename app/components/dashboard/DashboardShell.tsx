@@ -17,7 +17,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
       {/* Mobile overlay — only show on mobile when sidebar is open */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-25 bg-black/50 md:hidden"
+          className="fixed inset-0 bg-black/50 md:hidden"
+          style={{ zIndex: 25 }}
           onClick={closeSidebar}
         />
       )}
