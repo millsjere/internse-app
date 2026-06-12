@@ -1,5 +1,8 @@
+'use client';
+
 import { DashboardSidebar } from './DashboardSidebar';
 import { DashboardTopbar } from './DashboardTopbar';
+import { useUIStore } from '@/lib/store';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -7,13 +10,23 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ children, variant }: DashboardShellProps) {
+  const { isSidebarOpen, closeSidebar, toggleSidebar } = useUIStore();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <DashboardSidebar variant={variant} />
-      <DashboardTopbar />
+      {/* Mobile overlay — only show on mobile when sidebar is open */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-25 bg-black/50 md:hidden"
+          onClick={closeSidebar}
+        />
+      )}
 
-      {/* Main content area — offset for sidebar (w-60=240px) and topbar (h-14=56px) */}
-      <main className="pl-60 pt-14">
+      <DashboardSidebar variant={variant} />
+      <DashboardTopbar onMenuClick={toggleSidebar} />
+
+      {/* Main content area — responsive padding for sidebar and topbar */}
+      <main className="pt-14 md:pl-60">
         <div className="dash-page animate-fadeIn">
           {children}
         </div>

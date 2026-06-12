@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useUIStore } from '@/lib/store';
 import { ICompany } from '@/types';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
@@ -42,6 +42,7 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ variant }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
+  const { isSidebarOpen } = useUIStore();
   const teamRole = variant === 'employer' ? (user as ICompany | null)?.teamRole : undefined;
 
   const rawNav = variant === 'employer' ? employerNav : userNav;
@@ -59,7 +60,7 @@ export function DashboardSidebar({ variant }: DashboardSidebarProps) {
   }
 
   return (
-    <aside className="dash-sidebar">
+    <aside className={cn('dash-sidebar', isSidebarOpen && 'translate-x-0')}>
       {/* Brand */}
       <div className="flex items-center px-5 h-16 border-b border-white/10 flex-shrink-0">
         <Link href="/">

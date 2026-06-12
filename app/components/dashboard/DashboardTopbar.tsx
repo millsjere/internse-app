@@ -102,7 +102,7 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
   return (
     <>
-    <header className="dash-topbar left-60 right-0">
+    <header className="dash-topbar">
       {/* Left: mobile menu toggle */}
       <div className="flex items-center gap-3 flex-1">
         <button

@@ -132,13 +132,15 @@ body {
 /* ─── Dashboard layout ────────────────────────────── */
 .dash-sidebar {
   @apply fixed inset-y-0 left-0 z-30 w-60 bg-gray-950 flex flex-col
-         transition-transform duration-300 ease-in-out;
+         transition-transform duration-300 ease-in-out
+         -translate-x-full md:translate-x-0;
 }
 
 .dash-topbar {
-  @apply fixed top-0 left-60 right-0 z-20 h-16 bg-white border-b border-gray-100
+  @apply fixed top-0 right-0 z-20 h-16 bg-white border-b border-gray-100
          flex items-center justify-between px-6
-         dark:bg-gray-900 dark:border-gray-800;
+         dark:bg-gray-900 dark:border-gray-800
+         w-full md:left-60;
 }
 
 .dash-content {
