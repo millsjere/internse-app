@@ -15,7 +15,13 @@ class ApiClient {
       },
     });
 
-    // Add request interceptor — no need to manually include JWT token since withCredentials: true sends HTTP-only cookies automatically
+    // Add request interceptor for debugging
+    this.client.interceptors.request.use((config) => {
+      if (process.env.NODE_ENV === 'development' || typeof window !== 'undefined' && (window as any).__DEBUG_AUTH) {
+        console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, { withCredentials: config.withCredentials });
+      }
+      return config;
+    });
 
     // Add response interceptor with token refresh logic
     this.client.interceptors.response.use(

@@ -23,10 +23,13 @@ export function useAuthInit() {
           const user = response.data;
           const userType = response.data.type === 'company' ? 'company' : 'user';
           setUser(user, userType, user.tokenExpiry);
+          console.log('[Auth Init] User restored:', userType);
+        } else {
+          console.log('[Auth Init] No user data in response');
         }
       } catch (error) {
         // User is not authenticated, that's fine
-        console.log('No active session found');
+        console.log('[Auth Init] No active session found', error instanceof Error ? error.message : '');
       } finally {
         setInitialized(true);
         setAuthLoading(false);
@@ -34,5 +37,5 @@ export function useAuthInit() {
     };
 
     initializeAuth();
-  }, [isInitialized, setUser, setInitialized, setAuthLoading]);
+  }, [isInitialized, setUser, setInitialized, setAuthLoading, pathname]);
 }
