@@ -71,13 +71,18 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
     return <>{children}</>;
   }
 
-  if (!isAuthenticated || userType !== 'company') {
-    return null;
-  }
-
   // Onboarding and set-password pages render without the dashboard shell
   if (isOnboardingRoute || isSetPasswordRoute) {
     return <>{children}</>;
+  }
+
+  // Show spinner while redirect is happening (session expired, redirecting to login)
+  if (!isAuthenticated || userType !== 'company') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <Spinner size="lg" className="text-blue-500" />
+      </div>
+    );
   }
 
   return <DashboardShell variant="employer">{children}</DashboardShell>;

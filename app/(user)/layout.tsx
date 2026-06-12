@@ -19,18 +19,13 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     }
   }, [isInitialized, isLoading, isAuthenticated, userType, router]);
 
-  // Show loading while auth is initializing
-  if (!isInitialized || isLoading) {
+  // Show loading while auth is initializing or redirecting
+  if (!isInitialized || isLoading || !isAuthenticated || userType !== 'user') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <Spinner size="lg" className="text-blue-500" />
       </div>
     );
-  }
-
-  // If not authenticated after init complete, show nothing (redirect is happening)
-  if (!isAuthenticated || userType !== 'user') {
-    return null;
   }
 
   return <DashboardShell variant="user">{children}</DashboardShell>;
