@@ -8,17 +8,10 @@ import { ICompany } from '@/types';
 import { Spinner } from '@/app/components/ui/Spinner';
 import toast from 'react-hot-toast';
 import {
-  Building2, Check, Zap, Star, Crown, CreditCard,
-  Globe, Phone, MapPin, Briefcase,
+  Building2, Globe, Phone, MapPin, Briefcase,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: '$', GBP: '£', EUR: '€', GHS: '₵', NGN: '₦', KES: 'KSh', ZAR: 'R',
-};
-
-const PLAN_ICONS = [Zap, Star, Crown, CreditCard];
 
 const INDUSTRIES = [
   'Technology', 'Finance', 'Healthcare', 'Education', 'Retail',
@@ -34,22 +27,12 @@ const STEPS = [
     title: 'Company Profile',
     description: 'Tell candidates about your company — industry, size, and where you\'re based.',
   },
-  {
-    n: 2,
-    icon: CreditCard,
-    title: 'Choose a Plan',
-    description: 'Pick the plan that fits your hiring needs. Start free or unlock more features.',
-  },
 ];
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, setUser } = useAuthStore();
   const company = user as ICompany | null;
-
-  const [step, setStep] = useState<1 | 2>(
-    company?.onboardingStep === 'subscription' ? 2 : 1
-  );
 
   const [profile, setProfile] = useState({
     phone: company?.phone ?? '',
@@ -63,22 +46,12 @@ export default function OnboardingPage() {
     description: company?.description ?? '',
   });
 
-  const [plans, setPlans] = useState<any[]>([]);
-  const [plansLoading, setPlansLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
-  const [selectingPlan, setSelectingPlan] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (company?.onboardingStep === 'complete') router.push('/employer');
   }, [company, router]);
-
-  useEffect(() => {
-    apiClient.getPlans()
-      .then((res) => setPlans(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {})
-      .finally(() => setPlansLoading(false));
-  }, []);
 
   const validateProfile = () => {
     const e: Record<string, string> = {};
@@ -95,7 +68,8 @@ export default function OnboardingPage() {
       const res = await apiClient.saveOnboardingProfile(profile);
       if (res.success) {
         if (res.data) setUser(res.data, 'company');
-        setStep(2);
+        toast.success('Profile saved! Redirecting to dashboard...');
+        router.push('/employer');
       } else {
         toast.error(res.message || 'Failed to save profile');
       }
@@ -103,32 +77,6 @@ export default function OnboardingPage() {
       toast.error('Something went wrong');
     } finally {
       setSavingProfile(false);
-    }
-  };
-
-  const handleSelectPlan = async (planKey: string) => {
-    setSelectingPlan(planKey);
-    try {
-      const callbackUrl = `${window.location.origin}/employer/onboarding/success`;
-      const res = await apiClient.selectPlan(planKey, 'monthly', callbackUrl);
-      if (res.success) {
-        const { authorizationUrl } = res.data ?? {};
-        if (authorizationUrl) {
-          // Paid plan — redirect to Paystack
-          window.location.href = authorizationUrl;
-        } else {
-          // Free plan — backend returned full company object
-          if (res.data) setUser(res.data, 'company');
-          toast.success('Welcome to Internse!');
-          router.push('/employer');
-        }
-      } else {
-        toast.error(res.message || 'Failed to select plan');
-      }
-    } catch {
-      toast.error('Something went wrong');
-    } finally {
-      setSelectingPlan(null);
     }
   };
 
@@ -161,8 +109,8 @@ export default function OnboardingPage() {
           {/* Steps */}
           <div className="flex flex-col gap-0">
             {STEPS.map(({ n, icon: Icon, title, description }, idx) => {
-              const isDone = step > n;
-              const isActive = step === n;
+              const isDone = false;
+              const isActive = true;
               return (
                 <div key={n} className="flex gap-4">
                   {/* Icon + connector */}
@@ -223,12 +171,11 @@ export default function OnboardingPage() {
 
           {/* Step label */}
           <p className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">
-            Step {step} of {STEPS.length}
+            Step 1 of 1
           </p>
 
-          {/* ── Step 1: Company Profile ── */}
-          {step === 1 && (
-            <div className="flex flex-col flex-1">
+          {/* ── Company Profile ── */}
+          <div className="flex flex-col flex-1">
               <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-1">Set up your profile</h1>
               <p className="text-gray-500 dark:text-gray-400 text-sm mb-7">
                 Help candidates learn about your company. Pre-filled details from your registration are shown below.
@@ -328,99 +275,6 @@ export default function OnboardingPage() {
                 </button>
               </div>
             </div>
-          )}
-
-          {/* ── Step 2: Choose Plan ── */}
-          {step === 2 && (
-            <div className="flex flex-col flex-1">
-              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-1">Choose your plan</h1>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mb-7">
-                Start free or unlock more with a paid plan. Upgrade or downgrade anytime.
-              </p>
-
-              {plansLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {plans.map((plan, idx) => {
-                    const Icon = PLAN_ICONS[idx] ?? CreditCard;
-                    const isFree = !plan.monthlyPrice || plan.monthlyPrice === 0;
-                    const symbol = CURRENCY_SYMBOLS[plan.currency] ?? plan.currency ?? '';
-                    const priceLabel = isFree ? 'Free' : `${symbol}${plan.monthlyPrice}`;
-                    const billingNote = isFree ? 'Forever free' : 'per month';
-                    const isSelecting = selectingPlan === plan.planType;
-                    const anySelecting = selectingPlan !== null;
-
-                    return (
-                      <div
-                        key={plan._id}
-                        className={`rounded-2xl border-2 p-5 transition-all ${
-                          plan.isPopular
-                            ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 shadow-md shadow-blue-100 dark:shadow-blue-900/20'
-                            : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900'
-                        }`}
-                      >
-                        {plan.isPopular && (
-                          <span className="inline-block text-xs font-bold bg-blue-600 text-white px-3 py-0.5 rounded-full mb-3">
-                            ⭐ Most Popular
-                          </span>
-                        )}
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-xl ${plan.isPopular ? 'bg-blue-100 dark:bg-blue-950' : 'bg-gray-100 dark:bg-gray-800'} flex items-center justify-center flex-shrink-0`}>
-                              <Icon className={`w-5 h-5 ${plan.isPopular ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'}`} />
-                            </div>
-                            <div>
-                              <div className="flex items-baseline gap-2 mb-1">
-                                <h3 className="text-base font-extrabold text-gray-900 dark:text-white">{plan.displayName}</h3>
-                                <span className="text-xl font-extrabold text-gray-900 dark:text-white">{priceLabel}</span>
-                                <span className="text-xs text-gray-400">{billingNote}</span>
-                              </div>
-                              <ul className="flex flex-wrap gap-x-4 gap-y-1">
-                                {(plan.features ?? []).map((f: string) => (
-                                  <li key={f} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                    <Check className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-                                    {f}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-
-                          <button
-                            onClick={() => handleSelectPlan(plan.planType)}
-                            disabled={anySelecting}
-                            className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 disabled:opacity-60 ${
-                              plan.isPopular
-                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
-                                : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100'
-                            }`}
-                          >
-                            {isSelecting && <Spinner size="sm" />}
-                            {isFree ? 'Start free' : 'Continue'}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="mt-auto pt-6 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
-                  ← Back to profile
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

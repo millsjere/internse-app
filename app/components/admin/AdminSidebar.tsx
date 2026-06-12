@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Users, Building2, Briefcase,
-  CreditCard, Settings, LogOut,
+  Settings, LogOut,
 } from 'lucide-react';
 import { useAdminStore } from '@/lib/adminStore';
 import { adminApi } from '@/lib/adminApi';
@@ -43,7 +43,6 @@ const adminNav: NavGroup[] = [
   {
     label: 'Platform',
     items: [
-      { label: 'Pricing',  href: '/admin/pricing',  icon: CreditCard },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },

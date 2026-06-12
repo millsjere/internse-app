@@ -18,7 +18,6 @@ import { IUser, ICompany } from '@/types';
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/jobs', label: 'Opportunities' },
-  { href: '/pricing', label: 'Pricing' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];

@@ -5,7 +5,6 @@ import { Twitter, Linkedin, Github, Instagram } from 'lucide-react';
 const footerLinks = {
   company: [
     { label: 'About Us', href: '/about' },
-    { label: 'Pricing', href: '/pricing' },
     { label: 'Contact', href: '/contact' },
     // { label: 'Blog', href: '#' },
   ],
@@ -18,7 +17,6 @@ const footerLinks = {
   employers: [
     { label: 'Post a Job', href: '/register' },
     { label: 'Employer Login', href: '/login' },
-    { label: 'Pricing Plans', href: '/pricing' },
     // { label: 'Hire Talent', href: '#' },
   ],
   legal: [
