@@ -8,7 +8,7 @@ import { ICompany } from '@/types';
 import { Spinner } from '@/app/components/ui/Spinner';
 import toast from 'react-hot-toast';
 import {
-  Building2, Globe, Phone, MapPin, Briefcase,
+  Building2, Globe, Phone, MapPin, Briefcase, Check,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
