@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { DashboardShell } from '@/app/components/dashboard/DashboardShell';
@@ -11,6 +11,7 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, userType, isInitialized, isLoading, user } = useAuthStore();
+  const redirectRef = useRef(false);
 
   const isOnboardingRoute = pathname.startsWith('/employer/onboarding');
   const isJoinTeamRoute = pathname.startsWith('/employer/join-team');
@@ -22,7 +23,8 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
     // Allow unauthenticated access to join-team route (processes invite token)
     if (isJoinTeamRoute) return;
 
-    if (!isAuthenticated || userType !== 'company') {
+    if ((!isAuthenticated || userType !== 'company') && !redirectRef.current) {
+      redirectRef.current = true;
       router.push('/login');
       return;
     }
@@ -76,13 +78,9 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
     return <>{children}</>;
   }
 
-  // Show spinner while redirect is happening (session expired, redirecting to login)
+  // If not authenticated, return nothing (redirect is happening in useEffect)
   if (!isAuthenticated || userType !== 'company') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <Spinner size="lg" className="text-blue-500" />
-      </div>
-    );
+    return null;
   }
 
   return <DashboardShell variant="employer">{children}</DashboardShell>;
