@@ -38,7 +38,8 @@ export default function UserSettingsPage() {
   async function handleSaveProfile() {
     setSavingProfile(true);
     try {
-      const res = await apiClient.updateUserProfile(profile);
+      const { email, ...profileData } = profile;
+      const res = await apiClient.updateUserProfile(profileData);
       if (res.success) {
         toast.success('Account updated');
         if (res.data) setUser(res.data, 'user');
@@ -118,7 +119,7 @@ export default function UserSettingsPage() {
                 </div>
                 <div>
                   <label className="label">Email</label>
-                  <input type="email" className="input" value={profile.email} onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))} />
+                  <input type="email" className="input opacity-60 cursor-not-allowed" value={profile.email} disabled />
                 </div>
                 <div>
                   <label className="label">Phone</label>
