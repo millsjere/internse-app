@@ -60,7 +60,7 @@ export function DashboardSidebar({ variant }: DashboardSidebarProps) {
   }
 
   return (
-    <aside className={cn('dash-sidebar', isSidebarOpen && 'translate-x-0')}>
+    <aside className="dash-sidebar" style={isSidebarOpen ? { transform: 'translateX(0)' } : {}}>
       {/* Brand */}
       <div className="flex items-center px-5 h-16 border-b border-white/10 flex-shrink-0">
         <Link href="/">
