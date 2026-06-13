@@ -43,6 +43,11 @@ export function middleware(request: NextRequest) {
   }
 
   if (isAuthRoute && isAuthenticated) {
+    // For /login specifically, check if this is a mobile user coming from an expired session
+    // Let users explicitly access /login even with cookies present - they'll be validated by auth init
+    if (pathname === '/login') {
+      return NextResponse.next();
+    }
     const userType = request.cookies.get('cid_jwt') ? 'company' : 'user';
     const redirectPath = userType === 'company' ? '/employer' : '/profile';
     return NextResponse.redirect(new URL(redirectPath, request.url));

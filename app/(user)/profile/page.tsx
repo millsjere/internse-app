@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { apiClient } from '@/lib/api';
 import { PageHeader } from '@/app/components/ui/PageHeader';
@@ -20,7 +21,8 @@ const emptyExp: Omit<IExperience, '_id'> = { company: '', position: '', startDat
 const emptyEdu: Omit<IEducation, '_id'> = { school: '', degree: '', field: '', startDate: '', endDate: '', description: '' };
 
 export default function ProfilePage() {
-  const { user, setUser, userType } = useAuthStore();
+  const { user, setUser, userType, isAuthenticated } = useAuthStore();
+  const router = useRouter();
   const userData = user as IUser | null;
 
   const [editingBasic, setEditingBasic] = useState(false);
@@ -42,6 +44,12 @@ export default function ProfilePage() {
   const [uploadingResume, setUploadingResume] = useState(false);
 
   const completion = userData?.profileCompletion ?? 0;
+
+  useEffect(() => {
+    if (!isAuthenticated || !userData) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, userData, router]);
 
   const init = useCallback(() => {
     if (!userData) return;
