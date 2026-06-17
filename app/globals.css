@@ -140,7 +140,7 @@ body {
   @apply fixed top-0 right-0 z-50 h-16 bg-white border-b border-gray-100
          flex items-center justify-between px-6
          dark:bg-gray-900 dark:border-gray-800
-         w-full md:left-60;
+         w-full md:left-60 md:w-[calc(100%-240px)];
 }
 
 .dash-content {

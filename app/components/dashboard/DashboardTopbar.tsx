@@ -115,7 +115,7 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
       </div>
 
       {/* Right: notifications + theme + profile */}
-      <div className="flex items-center gap-1 ml-auto">
+      <div className="flex items-center gap-2 ml-auto">
         {/* Notifications */}
         <button
           onClick={() => setNotifOpen(true)}
@@ -138,20 +138,20 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
         <ThemeToggler />
 
         {/* Divider — hidden on mobile */}
-        <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 hidden sm:block" />
+        <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block" />
 
         {/* Profile dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen((v) => !v)}
-            className="flex items-center gap-1.5 pl-1.5 pr-2 py-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-2 pl-2 pr-2.5 py-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
           >
             <Avatar src={photoSrc} name={displayName || 'U'} size="sm" />
-            <span className="hidden md:block text-sm font-medium text-gray-800 dark:text-gray-200 max-w-[100px] truncate">
+            <span className="hidden lg:block text-sm font-medium text-gray-800 dark:text-gray-200 max-w-[120px] truncate">
               {displayName}
             </span>
             <ChevronDown className={cn(
-              'w-3.5 h-3.5 text-gray-400 transition-transform duration-200 hidden sm:block',
+              'w-4 h-4 text-gray-400 transition-transform duration-200 hidden sm:block',
               dropdownOpen && 'rotate-180'
             )} />
           </button>
