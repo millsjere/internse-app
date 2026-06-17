@@ -13,7 +13,7 @@ import { ICompany } from '@/types';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import {
-  Bell, Menu, ChevronDown, User, CreditCard, LogOut,
+  Bell, Menu, ChevronDown, User, LogOut,
 } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -52,7 +52,6 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const photoSrc = (user as any)?.logo || (user as any)?.profilePhoto || null;
 
   const profileHref  = isCompany ? '/employer/settings' : '/profile';
-  const subscriptionHref = isCompany ? '/employer/settings?tab=subscription' : '/settings?tab=subscription';
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -181,17 +180,6 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
                 <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <span>Profile</span>
               </Link>
-
-              {!teamRole && (
-                <Link
-                  href={subscriptionHref}
-                  onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 mx-1 rounded-lg transition-colors"
-                >
-                  <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span>Billing</span>
-                </Link>
-              )}
 
               <div className="h-px bg-gray-100 dark:bg-gray-800 mx-2 my-1" />
 
