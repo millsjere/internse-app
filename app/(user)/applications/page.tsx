@@ -100,7 +100,10 @@ export default function ApplicationsPage() {
             title={filter === 'all' ? "No applications yet" : `No ${filter} applications`}
             description={filter === 'all' ? "Start applying to jobs that match your skills and interests." : undefined}
             action={filter === 'all' ? (
-              <Link href="/jobs" className="btn btn-primary btn-sm">Browse Jobs</Link>
+              <Link href="/jobs" className="btn btn-primary btn-sm whitespace-nowrap">
+                <span className="hidden sm:inline">Browse Jobs</span>
+                <span className="sm:hidden">Jobs</span>
+              </Link>
             ) : undefined}
           />
         </div>

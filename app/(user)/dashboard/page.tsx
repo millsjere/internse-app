@@ -44,10 +44,10 @@ export default function UserDashboardPage() {
   const pending  = applications.filter((a) => a.status === 'pending').length;
 
   const statCards = [
-    { label: 'Applications', value: applications.length, icon: FileText, color: 'bg-blue-50 dark:bg-blue-950', iconColor: 'text-blue-600 dark:text-blue-400', href: '/applications' },
-    { label: 'Accepted',     value: accepted,             icon: CheckCircle, color: 'bg-emerald-50 dark:bg-emerald-950', iconColor: 'text-emerald-600 dark:text-emerald-400', href: '/applications' },
-    { label: 'Pending',      value: pending,              icon: Clock,  color: 'bg-amber-50 dark:bg-amber-950', iconColor: 'text-amber-600 dark:text-amber-400', href: '/applications' },
-    { label: 'Saved Opportunities',   value: favCount,             icon: Heart,  color: 'bg-pink-50 dark:bg-pink-950', iconColor: 'text-pink-600 dark:text-pink-400', href: '/favorites' },
+    { label: 'Applications', mobileLabel: 'Apps', value: applications.length, icon: FileText, color: 'bg-blue-50 dark:bg-blue-950', iconColor: 'text-blue-600 dark:text-blue-400', href: '/applications' },
+    { label: 'Accepted',     mobileLabel: 'OK', value: accepted,             icon: CheckCircle, color: 'bg-emerald-50 dark:bg-emerald-950', iconColor: 'text-emerald-600 dark:text-emerald-400', href: '/applications' },
+    { label: 'Pending',      mobileLabel: 'Waiting', value: pending,              icon: Clock,  color: 'bg-amber-50 dark:bg-amber-950', iconColor: 'text-amber-600 dark:text-amber-400', href: '/applications' },
+    { label: 'Saved Opportunities',   mobileLabel: 'Saved', value: favCount,             icon: Heart,  color: 'bg-pink-50 dark:bg-pink-950', iconColor: 'text-pink-600 dark:text-pink-400', href: '/favorites' },
   ];
 
   return (
@@ -56,8 +56,10 @@ export default function UserDashboardPage() {
         title={`Welcome back, ${firstName}`}
         description="Here's an overview of your job search activity."
         action={
-          <Link href="/browse" className="btn btn-primary">
-            <Briefcase className="w-4 h-4" /> Browse Opportunities
+          <Link href="/browse" className="btn btn-primary whitespace-nowrap">
+            <Briefcase className="w-4 h-4" />
+            <span className="hidden sm:inline">Browse Opportunities</span>
+            <span className="sm:hidden">Opportunities</span>
           </Link>
         }
       />
@@ -93,7 +95,10 @@ export default function UserDashboardPage() {
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {loading ? <Spinner size="sm" className="text-gray-400" /> : s.value}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              <span className="hidden sm:inline">{s.label}</span>
+              <span className="sm:hidden">{(s as any).mobileLabel ?? s.label}</span>
+            </p>
           </Link>
         ))}
       </div>
@@ -116,7 +121,10 @@ export default function UserDashboardPage() {
             </div>
             <p className="font-medium text-gray-900 dark:text-white mb-1">No applications yet</p>
             <p className="text-sm text-gray-500 mb-4">Start applying to opportunities that match your skills.</p>
-            <Link href="/browse" className="btn btn-primary btn-sm">Browse Opportunities</Link>
+            <Link href="/browse" className="btn btn-primary btn-sm whitespace-nowrap">
+              <span className="hidden sm:inline">Browse Opportunities</span>
+              <span className="sm:hidden">Opportunities</span>
+            </Link>
           </div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-800">
