@@ -75,22 +75,23 @@ export default function UserSettingsPage() {
     <div>
       <PageHeader title="Settings" description="Manage your account and preferences" />
 
-      <div className="flex gap-6 flex-col lg:flex-row">
-        <nav className="lg:w-48 flex-shrink-0">
-          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible">
+      <div className="flex gap-4 flex-col lg:gap-6 lg:flex-row">
+        {/* Tabs - Horizontal on mobile, vertical on desktop */}
+        <nav className="lg:w-48 flex-shrink-0 -mx-4 px-4 lg:mx-0 lg:px-0">
+          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0 snap-x snap-mandatory">
             {tabs.map((t) => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 className={cn(
-                  'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
+                  'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 lg:flex-shrink',
                   tab === t.key
                     ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
                     : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
                 )}
               >
                 <t.icon className="w-4 h-4 flex-shrink-0" />
-                {t.label}
+                <span className="hidden sm:inline">{t.label}</span>
               </button>
             ))}
           </div>
@@ -99,16 +100,16 @@ export default function UserSettingsPage() {
         <div className="flex-1 min-w-0">
           {tab === 'account' && (
             <div className="card space-y-5">
-              <div className="flex items-center gap-4 pb-5 border-b border-gray-100 dark:border-gray-800">
-                <Avatar src={userData?.profilePhoto} name={fullName || 'U'} size="xl" />
-                <div>
-                  <h2 className="font-semibold text-gray-900 dark:text-white">{fullName}</h2>
-                  <p className="text-sm text-gray-500">{userData?.email}</p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 pb-5 border-b border-gray-100 dark:border-gray-800">
+                <Avatar src={userData?.profilePhoto} name={fullName || 'U'} size="lg" />
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-semibold text-gray-900 dark:text-white truncate">{fullName}</h2>
+                  <p className="text-sm text-gray-500 truncate">{userData?.email}</p>
                   {userData?.verified && <Badge variant="green" className="mt-1.5"><Check className="w-3 h-3" />Verified</Badge>}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="label">First Name</label>
                   <input className="input" value={profile.firstname} onChange={(e) => setProfile((p) => ({ ...p, firstname: e.target.value }))} />
@@ -163,9 +164,11 @@ export default function UserSettingsPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
-                <button onClick={handleSaveProfile} disabled={savingProfile} className="btn btn-primary">
-                  {savingProfile ? <Spinner size="sm" /> : <Save className="w-4 h-4" />} Save Changes
+              <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <button onClick={handleSaveProfile} disabled={savingProfile} className="btn btn-primary gap-2 whitespace-nowrap">
+                  {savingProfile ? <Spinner size="sm" /> : <Save className="w-4 h-4" />}
+                  <span className="hidden sm:inline">Save Changes</span>
+                  <span className="sm:hidden">Save</span>
                 </button>
               </div>
             </div>
@@ -198,9 +201,11 @@ export default function UserSettingsPage() {
                   </div>
                 );
               })}
-              <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
-                <button onClick={handleChangePassword} disabled={savingPassword} className="btn btn-primary">
-                  {savingPassword ? <Spinner size="sm" /> : <Lock className="w-4 h-4" />} Update Password
+              <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <button onClick={handleChangePassword} disabled={savingPassword} className="btn btn-primary gap-2 whitespace-nowrap">
+                  {savingPassword ? <Spinner size="sm" /> : <Lock className="w-4 h-4" />}
+                  <span className="hidden sm:inline">Update Password</span>
+                  <span className="sm:hidden">Update</span>
                 </button>
               </div>
             </div>
@@ -227,12 +232,12 @@ export default function UserSettingsPage() {
                 { key: 'newJobMatches', label: 'New job matches', desc: 'Receive alerts for jobs that match your profile' },
                 { key: 'newsletter', label: 'Newsletter', desc: 'Tips, career advice, and platform updates' },
               ] as const).map(({ key, label, desc }) => (
-                <div key={key} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                  <div>
+                <div key={key} className="flex items-start sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+                  <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{desc}</p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                  <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-2">
                     <input
                       type="checkbox"
                       className="sr-only peer"
@@ -243,9 +248,11 @@ export default function UserSettingsPage() {
                   </label>
                 </div>
               ))}
-              <div className="flex justify-end pt-2">
-                <button onClick={() => toast.success('Preferences saved')} className="btn btn-primary">
-                  <Save className="w-4 h-4" /> Save Preferences
+              <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <button onClick={() => toast.success('Preferences saved')} className="btn btn-primary gap-2 whitespace-nowrap">
+                  <Save className="w-4 h-4" />
+                  <span className="hidden sm:inline">Save Preferences</span>
+                  <span className="sm:hidden">Save</span>
                 </button>
               </div>
             </div>

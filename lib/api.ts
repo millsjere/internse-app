@@ -255,7 +255,7 @@ class ApiClient {
   }
 
   async updateUserProfile(data: any): Promise<ApiResponse> {
-    const response = await this.client.post('/u/account/profile', data);
+    const response = await this.client.put('/user/profile', data);
     return response.data;
   }
 
@@ -358,7 +358,7 @@ class ApiClient {
   }
 
   async changeUserPassword(data: { currentPassword: string; newPassword: string; confirmPassword: string }): Promise<ApiResponse> {
-    const response = await this.client.patch('/u/account/password', data);
+    const response = await this.client.post('/user/profile/password', data);
     return response.data;
   }
 

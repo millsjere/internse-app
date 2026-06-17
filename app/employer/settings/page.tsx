@@ -411,21 +411,21 @@ function EmployerSettingsPage() {
     <div>
       <PageHeader title="Settings" description="Manage your account and preferences" />
 
-      {/* Tabs */}
-      <div className="flex gap-0 border-b border-gray-200 dark:border-gray-800 mb-6 overflow-x-auto">
+      {/* Tabs — Responsive */}
+      <div className="flex gap-0 border-b border-gray-200 dark:border-gray-800 mb-6 overflow-x-auto -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 snap-x snap-mandatory">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={cn(
-              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap -mb-px',
+              'flex items-center gap-2 px-3 sm:px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap -mb-px flex-shrink-0',
               tab === t.key
                 ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                 : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
             )}
           >
-            <t.icon className="w-4 h-4" />
-            {t.label}
+            <t.icon className="w-4 h-4 flex-shrink-0" />
+            <span className="hidden sm:inline">{t.label}</span>
           </button>
         ))}
       </div>
@@ -448,7 +448,7 @@ function EmployerSettingsPage() {
             </div>
 
             {/* Logo + company info */}
-            <div className="flex items-start gap-5 pb-5 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 pb-5 border-b border-gray-100 dark:border-gray-800">
               <div className="flex-shrink-0">
                 <ImageUploader
                   label="Company Logo"
@@ -459,9 +459,9 @@ function EmployerSettingsPage() {
                   shape="square"
                 />
               </div>
-              <div className="pt-6">
-                <h2 className="font-semibold text-gray-900 dark:text-white">{company?.companyName}</h2>
-                <p className="text-sm text-gray-500">{company?.email}</p>
+              <div className="flex-1 min-w-0 pt-0 sm:pt-6">
+                <h2 className="font-semibold text-gray-900 dark:text-white truncate">{company?.companyName}</h2>
+                <p className="text-sm text-gray-500 truncate">{company?.email}</p>
                 {company?.verified && (
                   <Badge variant="green" className="mt-1.5"><Check className="w-3 h-3" /> Verified</Badge>
                 )}
@@ -469,7 +469,7 @@ function EmployerSettingsPage() {
             </div>
 
             {/* Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {([
                 { field: 'companyName', label: 'Company Name', type: 'text' },
                 { field: 'email',       label: 'Email',         type: 'email', disabled: true },
@@ -491,7 +491,7 @@ function EmployerSettingsPage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="label">City</label>
                 <input className="input" value={profile.city} onChange={(e) => setProfile((p) => ({ ...p, city: e.target.value }))} />
@@ -549,10 +549,11 @@ function EmployerSettingsPage() {
               />
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
-              <button onClick={handleSaveProfile} disabled={savingProfile} className="btn btn-primary">
+            <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <button onClick={handleSaveProfile} disabled={savingProfile} className="btn btn-primary gap-2 whitespace-nowrap">
                 {savingProfile ? <Spinner size="sm" /> : <Save className="w-4 h-4" />}
-                Save Changes
+                <span className="hidden sm:inline">Save Changes</span>
+                <span className="sm:hidden">Save</span>
               </button>
             </div>
           </div>
@@ -588,10 +589,11 @@ function EmployerSettingsPage() {
               );
             })}
 
-            <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
-              <button onClick={handleChangePassword} disabled={savingPassword} className="btn btn-primary">
+            <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <button onClick={handleChangePassword} disabled={savingPassword} className="btn btn-primary gap-2 whitespace-nowrap">
                 {savingPassword ? <Spinner size="sm" /> : <Lock className="w-4 h-4" />}
-                Update Password
+                <span className="hidden sm:inline">Update Password</span>
+                <span className="sm:hidden">Update</span>
               </button>
             </div>
           </div>

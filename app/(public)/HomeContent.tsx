@@ -57,10 +57,10 @@ const CATEGORY_META: Record<string, { icon: React.ElementType }> = {
 };
 
 const features = [
-  { icon: Zap, title: 'Quick Apply', desc: 'Apply to any job with one click. No lengthy forms, no repetitive data entry.', color: 'bg-blue-100 text-blue-600' },
+  { icon: Zap, title: 'Quick Apply', desc: 'Apply to any opportunity with one click. No lengthy forms, no repetitive data entry.', color: 'bg-blue-100 text-blue-600' },
   { icon: Target, title: 'Smart Matching', desc: 'AI-powered recommendations tailored to your skills and career goals.', color: 'bg-violet-100 text-violet-600' },
   { icon: FileText, title: 'Profile Builder', desc: 'Create a standout profile that gets noticed by top recruiters.', color: 'bg-pink-100 text-pink-600' },
-  { icon: Bell, title: 'Real-time Alerts', desc: 'Get instant notifications when new roles match your criteria.', color: 'bg-amber-100 text-amber-600' },
+  { icon: Bell, title: 'Real-time Alerts', desc: 'Get instant notifications when new opportunities match your criteria.', color: 'bg-amber-100 text-amber-600' },
   { icon: BarChart3, title: 'Track Progress', desc: 'Monitor all your applications and interview stages in one place.', color: 'bg-emerald-100 text-emerald-600' },
   { icon: Users, title: 'Community', desc: 'Connect with peers, share tips, and learn from success stories.', color: 'bg-orange-100 text-orange-600' },
 ];

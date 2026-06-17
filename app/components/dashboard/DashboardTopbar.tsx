@@ -115,18 +115,19 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
       </div>
 
       {/* Right: notifications + theme + profile */}
-      <div className="flex items-center gap-1.5 ml-auto">
+      <div className="flex items-center gap-1 ml-auto">
         {/* Notifications */}
         <button
           onClick={() => setNotifOpen(true)}
-          className="btn btn-ghost btn-icon relative"
+          className="btn btn-ghost btn-icon relative group"
           aria-label="Notifications"
+          title="Notifications"
         >
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
             <span className={cn(
-              'absolute -top-[3px] -right-[0px] min-w-[16px] h-4 px-1',
-              'bg-blue-500 text-white text-[10px] font-bold rounded-full',
+              'absolute top-1 right-1 min-w-[18px] h-5 px-1',
+              'bg-red-500 text-white text-[11px] font-bold rounded-full',
               'flex items-center justify-center leading-none'
             )}>
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -136,27 +137,27 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
         <ThemeToggler />
 
-        {/* Divider */}
-        <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
+        {/* Divider — hidden on mobile */}
+        <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 hidden sm:block" />
 
         {/* Profile dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen((v) => !v)}
-            className="flex items-center gap-2 pl-1.5 pr-2.5 py-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-1.5 pl-1.5 pr-2 py-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <Avatar src={photoSrc} name={displayName || 'U'} size="sm" />
-            <span className="hidden sm:block text-sm font-medium text-gray-800 dark:text-gray-200 max-w-[130px] truncate">
+            <span className="hidden md:block text-sm font-medium text-gray-800 dark:text-gray-200 max-w-[100px] truncate">
               {displayName}
             </span>
             <ChevronDown className={cn(
-              'w-3.5 h-3.5 text-gray-400 transition-transform duration-200',
+              'w-3.5 h-3.5 text-gray-400 transition-transform duration-200 hidden sm:block',
               dropdownOpen && 'rotate-180'
             )} />
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 py-1.5 animate-scaleIn origin-top-right z-50">
+            <div className="absolute right-0 top-full mt-2 w-48 sm:w-56 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 py-1.5 animate-scaleIn origin-top-right z-50">
               {/* User info header */}
               <div className="px-3 py-2 mb-1 border-b border-gray-100 dark:border-gray-800">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{displayName}</p>
@@ -175,20 +176,20 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
               <Link
                 href={profileHref}
                 onClick={() => setDropdownOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 mx-1 rounded-lg"
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 mx-1 rounded-lg transition-colors"
               >
-                <User className="w-4 h-4 text-gray-400" />
-                Profile
+                <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span>Profile</span>
               </Link>
 
               {!teamRole && (
                 <Link
                   href={subscriptionHref}
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 mx-1 rounded-lg"
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 mx-1 rounded-lg transition-colors"
                 >
-                  <CreditCard className="w-4 h-4 text-gray-400" />
-                  Subscription
+                  <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <span>Billing</span>
                 </Link>
               )}
 
@@ -196,10 +197,10 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
               <button
                 onClick={() => { setDropdownOpen(false); setConfirmLogout(true); }}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 w-full text-left mx-1 rounded-lg"
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 w-full text-left mx-1 rounded-lg transition-colors"
               >
-                <LogOut className="w-4 h-4" />
-                Sign out
+                <LogOut className="w-4 h-4 flex-shrink-0" />
+                <span>Sign out</span>
               </button>
             </div>
           )}
