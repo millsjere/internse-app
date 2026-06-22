@@ -333,7 +333,7 @@ export default function HomeContent() {
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-16">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">Everything You Need to Succeed</h2>
-            <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">A full toolkit built for serious job seekers — from first click to first day.</p>
+            <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">A full toolkit built for serious opportunity seekers — from first click to first day.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

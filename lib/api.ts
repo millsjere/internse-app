@@ -262,27 +262,21 @@ class ApiClient {
   async uploadUserPhoto(file: File): Promise<ApiResponse> {
     const formData = new FormData();
     formData.append('photo', file);
-    const response = await this.client.patch('/u/account/photo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await this.client.patch('/u/account/photo', formData);
     return response.data;
   }
 
   async uploadUserCover(file: File): Promise<ApiResponse> {
     const formData = new FormData();
     formData.append('cover', file);
-    const response = await this.client.patch('/u/account/coverImg', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await this.client.patch('/u/account/coverImg', formData);
     return response.data;
   }
 
   async uploadUserResume(file: File): Promise<ApiResponse> {
     const formData = new FormData();
     formData.append('resume', file);
-    const response = await this.client.patch('/user/profile/resume', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await this.client.patch('/user/profile/resume', formData);
     return response.data;
   }
 

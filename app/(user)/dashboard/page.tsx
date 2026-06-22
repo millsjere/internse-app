@@ -54,7 +54,7 @@ export default function UserDashboardPage() {
     <div>
       <PageHeader
         title={`Welcome back, ${firstName}`}
-        description="Here's an overview of your job search activity."
+        description="Here's an overview of your opportunity search activity."
         action={
           <Link href="/browse" className="btn btn-primary whitespace-nowrap">
             <Briefcase className="w-4 h-4" />
