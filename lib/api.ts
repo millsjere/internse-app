@@ -15,8 +15,13 @@ class ApiClient {
       },
     });
 
-    // Add request interceptor for debugging
+    // Add request interceptor for debugging and FormData handling
     this.client.interceptors.request.use((config) => {
+      // For FormData requests, delete Content-Type header so axios/browser sets it with proper boundary
+      if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+      }
+
       if (process.env.NODE_ENV === 'development' || typeof window !== 'undefined' && (window as any).__DEBUG_AUTH) {
         console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, { withCredentials: config.withCredentials });
       }
