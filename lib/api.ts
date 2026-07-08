@@ -285,6 +285,11 @@ class ApiClient {
     return response.data;
   }
 
+  async deleteUserResume(): Promise<ApiResponse> {
+    const response = await this.client.delete('/user/profile/resume');
+    return response.data;
+  }
+
   async updateUserSettings(data: any): Promise<ApiResponse> {
     const response = await this.client.post('/u/account/settings', data);
     return response.data;

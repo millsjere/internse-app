@@ -42,6 +42,7 @@ export default function ProfilePage() {
   const [savingEdu, setSavingEdu] = useState(false);
 
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [deletingResume, setDeletingResume] = useState(false);
 
   const completion = userData?.profileCompletion ?? 0;
 
@@ -156,6 +157,24 @@ export default function ProfilePage() {
     } finally {
       setUploadingResume(false);
       e.target.value = '';
+    }
+  }
+
+  async function handleDeleteResume() {
+    if (!confirm('Delete your resume? You can upload a new one anytime.')) return;
+    setDeletingResume(true);
+    try {
+      const res = await apiClient.deleteUserResume();
+      if (res.success) {
+        toast.success('Resume deleted');
+        if (res.data) setUser(res.data, 'user');
+      } else {
+        toast.error(res.message || 'Failed to delete resume');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Something went wrong');
+    } finally {
+      setDeletingResume(false);
     }
   }
 
@@ -335,10 +354,20 @@ export default function ProfilePage() {
           <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4"><FileText className="w-4 h-4 text-gray-400" /> Resume</h2>
           <div className="space-y-3">
             {userData?.resume && (
-              <a href={userData.resume} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-colors group">
-                <FileText className="w-5 h-5 text-blue-500" />
-                <span className="text-sm font-medium text-gray-900 dark:text-white">View current resume</span>
-              </a>
+              <div className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                <a href={userData.resume} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 flex-1 min-w-0 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group">
+                  <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white truncate">View current resume</span>
+                </a>
+                <button
+                  onClick={handleDeleteResume}
+                  disabled={deletingResume}
+                  className="btn btn-danger btn-icon flex-shrink-0"
+                  title="Delete resume"
+                >
+                  {deletingResume ? <Spinner size="sm" /> : <Trash2 className="w-3.5 h-3.5" />}
+                </button>
+              </div>
             )}
             <div>
               <label htmlFor="resume-upload" className="cursor-pointer">
