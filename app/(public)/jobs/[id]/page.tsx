@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   MapPin, Clock, Briefcase, Building2,
-  Heart, HeartOff, ChevronLeft, Check, ExternalLink, Users, Tag, Eye, X,
+  Heart, HeartOff, ChevronLeft, Check, ExternalLink, Users, Tag, Eye, X, FileText,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { Spinner } from '@/app/components/ui/Spinner';
@@ -87,7 +87,8 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
   // Apply modal
   const [showModal, setShowModal] = useState(false);
   const [applying, setApplying] = useState(false);
-  const [resume, setResume] = useState('');
+  const [existingResume, setExistingResume] = useState('');
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [coverLetter, setCoverLetter] = useState('');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const autoOpened = useRef(false);
@@ -135,7 +136,7 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
         }
         // Pre-fill resume from profile
         if (user && (user as any).resume) {
-          setResume((user as any).resume);
+          setExistingResume((user as any).resume);
         }
       } catch {
         // ignore — non-critical
@@ -168,8 +169,18 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
     }
   }
 
+  function handleResumeFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) setResumeFile(file);
+    e.target.value = '';
+  }
+
   async function handleApply() {
     if (!job) return;
+    if (!resumeFile && !existingResume) {
+      toast.error('Please upload your resume');
+      return;
+    }
     // Validate required questions
     for (const q of job.questions) {
       if (q.required && !answers[q._id]?.trim()) {
@@ -184,7 +195,15 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
         question: q.question,
         answer: answers[q._id] ?? '',
       }));
-      const res = await apiClient.applyToJob(job._id, { resume, coverLetter, answers: answersPayload });
+      const formData = new FormData();
+      if (resumeFile) {
+        formData.append('resume', resumeFile);
+      } else {
+        formData.append('resumeUrl', existingResume);
+      }
+      formData.append('coverLetter', coverLetter);
+      formData.append('answers', JSON.stringify(answersPayload));
+      const res = await apiClient.applyToJob(job._id, formData);
       if (res.success) {
         toast.success('Application submitted!');
         setHasApplied(true);
@@ -510,14 +529,47 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
             <div className="px-6 py-5 space-y-5">
               {/* Resume */}
               <div>
-                <label className="label">Resume URL <span className="text-red-500">*</span></label>
+                <label className="label">Resume <span className="text-red-500">*</span></label>
                 <input
-                  className="input"
-                  placeholder="https://drive.google.com/..."
-                  value={resume}
-                  onChange={(e) => setResume(e.target.value)}
+                  id="apply-resume-upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={handleResumeFileChange}
                 />
-                <p className="text-xs text-gray-400 mt-1">Link to your resume (Google Drive, Dropbox, etc.)</p>
+                {resumeFile ? (
+                  <div className="flex items-center justify-between gap-2 p-3 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{resumeFile.name}</span>
+                    </div>
+                    <button type="button" onClick={() => setResumeFile(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : existingResume ? (
+                  <div className="flex items-center justify-between gap-2 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <a
+                      href={existingResume}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 min-w-0 text-sm font-medium text-gray-900 dark:text-white hover:underline"
+                    >
+                      <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                      <span className="truncate">Use uploaded resume</span>
+                    </a>
+                    <label htmlFor="apply-resume-upload" className="text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer flex-shrink-0">
+                      Replace
+                    </label>
+                  </div>
+                ) : (
+                  <label htmlFor="apply-resume-upload" className="cursor-pointer block">
+                    <div className="flex items-center justify-center p-4 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-colors bg-gray-50 dark:bg-gray-800/50">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Click to upload resume (PDF, DOC, DOCX)</span>
+                    </div>
+                  </label>
+                )}
+                <p className="text-xs text-gray-400 mt-1">Max 5MB · PDF, DOC, or DOCX</p>
               </div>
 
               {/* Cover letter */}
@@ -570,7 +622,7 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
               </button>
               <button
                 onClick={handleApply}
-                disabled={applying || !resume.trim()}
+                disabled={applying || (!resumeFile && !existingResume)}
                 className="btn btn-primary flex-1"
               >
                 {applying ? <Spinner size="sm" /> : 'Submit Application'}
