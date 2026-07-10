@@ -101,6 +101,10 @@ export interface IJob {
     _id: string;
     question: string;
     required: boolean;
+    type?: 'text' | 'single_choice' | 'multi_choice';
+    options?: string[];
+    maxLength?: number;
+    maxLengthUnit?: 'words' | 'characters';
   }>;
   createdAt: string;
   updatedAt: string;
@@ -139,7 +143,9 @@ export interface IApplication {
   answers: Array<{
     questionId: string;
     question: string;
-    answer: string;
+    type?: 'text' | 'single_choice' | 'multi_choice';
+    options?: string[];
+    answer: string | string[];
   }>;
   appliedAt: string;
   updatedAt: string;

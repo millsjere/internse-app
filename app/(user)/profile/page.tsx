@@ -143,6 +143,11 @@ export default function ProfilePage() {
   async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.type !== 'application/pdf') {
+      toast.error('Only PDF files are allowed');
+      e.target.value = '';
+      return;
+    }
     setUploadingResume(true);
     try {
       const res = await apiClient.uploadUserResume(file);
@@ -374,7 +379,7 @@ export default function ProfilePage() {
                 <input
                   id="resume-upload"
                   type="file"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,application/pdf"
                   onChange={handleResumeUpload}
                   disabled={uploadingResume}
                   className="hidden"
@@ -383,7 +388,7 @@ export default function ProfilePage() {
                   {uploadingResume ? (
                     <Spinner size="sm" />
                   ) : (
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Click to upload or drag resume (PDF, DOC, DOCX)</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Click to upload or drag resume (PDF)</span>
                   )}
                 </div>
               </label>

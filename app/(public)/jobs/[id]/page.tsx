@@ -16,6 +16,14 @@ interface JobQuestion {
   _id: string;
   question: string;
   required: boolean;
+  type?: 'text' | 'single_choice' | 'multi_choice';
+  options?: string[];
+  maxLength?: number;
+  maxLengthUnit?: 'words' | 'characters';
+}
+
+function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
 interface Job {
@@ -90,7 +98,7 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
   const [existingResume, setExistingResume] = useState('');
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [coverLetter, setCoverLetter] = useState('');
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const autoOpened = useRef(false);
   const viewTracked = useRef(false);
 
@@ -171,8 +179,22 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
 
   function handleResumeFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) setResumeFile(file);
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        toast.error('Only PDF files are allowed');
+      } else {
+        setResumeFile(file);
+      }
+    }
     e.target.value = '';
+  }
+
+  function handleCheckboxToggle(questionId: string, option: string) {
+    setAnswers((prev) => {
+      const current = Array.isArray(prev[questionId]) ? (prev[questionId] as string[]) : [];
+      const next = current.includes(option) ? current.filter((o) => o !== option) : [...current, option];
+      return { ...prev, [questionId]: next };
+    });
   }
 
   async function handleApply() {
@@ -181,11 +203,20 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
       toast.error('Please upload your resume');
       return;
     }
-    // Validate required questions
+    // Validate required questions and max-length limits
     for (const q of job.questions) {
-      if (q.required && !answers[q._id]?.trim()) {
+      const a = answers[q._id];
+      const empty = q.type === 'multi_choice' ? !Array.isArray(a) || a.length === 0 : !a || !String(a).trim();
+      if (q.required && empty) {
         toast.error(`Please answer: "${q.question}"`);
         return;
+      }
+      if ((q.type ?? 'text') === 'text' && q.maxLength && typeof a === 'string' && a.trim()) {
+        const count = q.maxLengthUnit === 'characters' ? a.length : countWords(a);
+        if (count > q.maxLength) {
+          toast.error(`"${q.question}" exceeds the ${q.maxLength}-${q.maxLengthUnit === 'characters' ? 'character' : 'word'} limit`);
+          return;
+        }
       }
     }
     setApplying(true);
@@ -193,7 +224,7 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
       const answersPayload = job.questions.map((q) => ({
         questionId: q._id,
         question: q.question,
-        answer: answers[q._id] ?? '',
+        answer: answers[q._id] ?? (q.type === 'multi_choice' ? [] : ''),
       }));
       const formData = new FormData();
       if (resumeFile) {
@@ -533,7 +564,7 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
                 <input
                   id="apply-resume-upload"
                   type="file"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,application/pdf"
                   className="hidden"
                   onChange={handleResumeFileChange}
                 />
@@ -565,11 +596,11 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
                 ) : (
                   <label htmlFor="apply-resume-upload" className="cursor-pointer block">
                     <div className="flex items-center justify-center p-4 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-colors bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Click to upload resume (PDF, DOC, DOCX)</span>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Click to upload resume (PDF)</span>
                     </div>
                   </label>
                 )}
-                <p className="text-xs text-gray-400 mt-1">Max 5MB · PDF, DOC, or DOCX</p>
+                <p className="text-xs text-gray-400 mt-1">Max 5MB · PDF only</p>
               </div>
 
               {/* Cover letter */}
@@ -596,15 +627,58 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
                         {q.question}
                         {q.required && <span className="text-red-500 ml-1">*</span>}
                       </label>
-                      <textarea
-                        className="input resize-none"
-                        rows={2}
-                        placeholder="Your answer..."
-                        value={answers[q._id] ?? ''}
-                        onChange={(e) =>
-                          setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }))
-                        }
-                      />
+                      {q.type === 'single_choice' ? (
+                        <div className="space-y-2">
+                          {q.options?.map((opt) => (
+                            <label key={opt} className="flex items-center gap-2.5 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+                              <input
+                                type="radio"
+                                name={`question-${q._id}`}
+                                checked={answers[q._id] === opt}
+                                onChange={() => setAnswers((prev) => ({ ...prev, [q._id]: opt }))}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-sm text-gray-700 dark:text-gray-300">{opt}</span>
+                            </label>
+                          ))}
+                        </div>
+                      ) : q.type === 'multi_choice' ? (
+                        <div className="space-y-2">
+                          {q.options?.map((opt) => (
+                            <label key={opt} className="flex items-center gap-2.5 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+                              <input
+                                type="checkbox"
+                                checked={Array.isArray(answers[q._id]) && (answers[q._id] as string[]).includes(opt)}
+                                onChange={() => handleCheckboxToggle(q._id, opt)}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-sm text-gray-700 dark:text-gray-300">{opt}</span>
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <>
+                          <textarea
+                            className="input resize-none"
+                            rows={2}
+                            placeholder="Your answer..."
+                            value={(answers[q._id] as string) ?? ''}
+                            onChange={(e) =>
+                              setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }))
+                            }
+                          />
+                          {q.maxLength && (() => {
+                            const text = (answers[q._id] as string) ?? '';
+                            const count = q.maxLengthUnit === 'characters' ? text.length : countWords(text);
+                            const over = count > q.maxLength!;
+                            return (
+                              <p className={`text-xs mt-1 text-right ${over ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                                {count} / {q.maxLength} {q.maxLengthUnit === 'characters' ? 'characters' : 'words'}
+                              </p>
+                            );
+                          })()}
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -622,7 +696,12 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
               </button>
               <button
                 onClick={handleApply}
-                disabled={applying || (!resumeFile && !existingResume)}
+                disabled={applying || (!resumeFile && !existingResume) || job.questions.some((q) => {
+                  if ((q.type ?? 'text') !== 'text' || !q.maxLength) return false;
+                  const text = (answers[q._id] as string) ?? '';
+                  const count = q.maxLengthUnit === 'characters' ? text.length : countWords(text);
+                  return count > q.maxLength;
+                })}
                 className="btn btn-primary flex-1"
               >
                 {applying ? <Spinner size="sm" /> : 'Submit Application'}

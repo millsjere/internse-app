@@ -10,9 +10,15 @@ import { ArrowLeft, Save, Globe, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { JOB_INDUSTRIES } from '@/lib/constants';
 
+type QuestionType = 'text' | 'single_choice' | 'multi_choice';
+
 interface JobQuestion {
   question: string;
   required: boolean;
+  type: QuestionType;
+  options: string[];
+  maxLength: string;
+  maxLengthUnit: 'words' | 'characters';
 }
 
 interface JobForm {
@@ -85,6 +91,10 @@ export default function PostJobPage() {
               (job.questions ?? []).map((q: any) => ({
                 question: q.question ?? '',
                 required: q.required ?? false,
+                type: q.type ?? 'text',
+                options: q.options ?? [],
+                maxLength: q.maxLength != null ? String(q.maxLength) : '',
+                maxLengthUnit: q.maxLengthUnit ?? 'words',
               }))
             );
           }
@@ -122,13 +132,46 @@ export default function PostJobPage() {
         max: form.salaryMax ? Number(form.salaryMax) : undefined,
         currency: form.currency,
       },
-      questions: questions.filter((q) => q.question.trim()),
+      questions: questions
+        .filter((q) => q.question.trim())
+        .map((q) => ({
+          question: q.question.trim(),
+          required: q.required,
+          type: q.type,
+          options: q.type === 'text' ? [] : q.options.map((o) => o.trim()).filter(Boolean),
+          ...(q.type === 'text' && q.maxLength.trim()
+            ? { maxLength: Number(q.maxLength), maxLengthUnit: q.maxLengthUnit }
+            : {}),
+        })),
     };
+  }
+
+  function questionsError(): string | null {
+    for (const q of questions) {
+      if (!q.question.trim()) continue;
+      if (q.type !== 'text') {
+        const validOptions = q.options.map((o) => o.trim()).filter(Boolean);
+        if (validOptions.length < 2) {
+          return `"${q.question}" needs at least 2 options`;
+        }
+      } else if (q.maxLength.trim()) {
+        const n = Number(q.maxLength);
+        if (!Number.isInteger(n) || n <= 0) {
+          return `"${q.question}" has an invalid max length`;
+        }
+      }
+    }
+    return null;
   }
 
   async function handleSaveDraft() {
     if (!form.title || !form.description) {
       toast.error('Title and description are required');
+      return;
+    }
+    const qError = questionsError();
+    if (qError) {
+      toast.error(qError);
       return;
     }
     setSaving(true);
@@ -153,6 +196,11 @@ export default function PostJobPage() {
   async function handlePublish() {
     if (!form.title || !form.description || !form.industry) {
       toast.error('Title, description, and industry are required to publish');
+      return;
+    }
+    const qError = questionsError();
+    if (qError) {
+      toast.error(qError);
       return;
     }
     setPublishing(true);
@@ -341,7 +389,7 @@ export default function PostJobPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setQuestions((prev) => [...prev, { question: '', required: false }])}
+                onClick={() => setQuestions((prev) => [...prev, { question: '', required: false, type: 'text', options: [], maxLength: '', maxLengthUnit: 'words' }])}
                 className="btn btn-outline btn-sm"
               >
                 <Plus className="w-4 h-4" /> Add Question
@@ -352,39 +400,144 @@ export default function PostJobPage() {
             ) : (
               <div className="space-y-3">
                 {questions.map((q, idx) => (
-                  <div key={idx} className="flex gap-3 items-start p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <div className="flex-1">
-                      <input
-                        className="input text-sm"
-                        placeholder={`Question ${idx + 1}`}
-                        value={q.question}
+                  <div key={idx} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 space-y-2.5">
+                    <div className="flex gap-3 items-start">
+                      <div className="flex-1">
+                        <input
+                          className="input text-sm"
+                          placeholder={`Question ${idx + 1}`}
+                          value={q.question}
+                          onChange={(e) =>
+                            setQuestions((prev) =>
+                              prev.map((item, i) => (i === idx ? { ...item, question: e.target.value } : item))
+                            )
+                          }
+                        />
+                      </div>
+                      <select
+                        className="input text-sm w-auto pt-2.5"
+                        value={q.type}
                         onChange={(e) =>
                           setQuestions((prev) =>
-                            prev.map((item, i) => (i === idx ? { ...item, question: e.target.value } : item))
+                            prev.map((item, i) =>
+                              i === idx
+                                ? {
+                                    ...item,
+                                    type: e.target.value as QuestionType,
+                                    options: e.target.value === 'text' ? [] : item.options.length ? item.options : ['', ''],
+                                  }
+                                : item
+                            )
                           )
                         }
-                      />
+                      >
+                        <option value="text">Short answer</option>
+                        <option value="single_choice">Single choice (radio)</option>
+                        <option value="multi_choice">Multiple choice (checkbox)</option>
+                      </select>
+                      <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap pt-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={q.required}
+                          onChange={(e) =>
+                            setQuestions((prev) =>
+                              prev.map((item, i) => (i === idx ? { ...item, required: e.target.checked } : item))
+                            )
+                          }
+                          className="w-3.5 h-3.5"
+                        />
+                        Required
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setQuestions((prev) => prev.filter((_, i) => i !== idx))}
+                        className="text-gray-400 hover:text-red-500 pt-2.5 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap pt-2.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={q.required}
-                        onChange={(e) =>
-                          setQuestions((prev) =>
-                            prev.map((item, i) => (i === idx ? { ...item, required: e.target.checked } : item))
-                          )
-                        }
-                        className="w-3.5 h-3.5"
-                      />
-                      Required
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setQuestions((prev) => prev.filter((_, i) => i !== idx))}
-                      className="text-gray-400 hover:text-red-500 pt-2.5 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+
+                    {q.type !== 'text' && (
+                      <div className="pl-1 space-y-2">
+                        {q.options.map((opt, optIdx) => (
+                          <div key={optIdx} className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400 w-4">{optIdx + 1}.</span>
+                            <input
+                              className="input text-sm py-1.5"
+                              placeholder={`Option ${optIdx + 1}`}
+                              value={opt}
+                              onChange={(e) =>
+                                setQuestions((prev) =>
+                                  prev.map((item, i) =>
+                                    i === idx
+                                      ? { ...item, options: item.options.map((o, oi) => (oi === optIdx ? e.target.value : o)) }
+                                      : item
+                                  )
+                                )
+                              }
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setQuestions((prev) =>
+                                  prev.map((item, i) =>
+                                    i === idx ? { ...item, options: item.options.filter((_, oi) => oi !== optIdx) } : item
+                                  )
+                                )
+                              }
+                              disabled={q.options.length <= 2}
+                              className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30 disabled:hover:text-gray-400"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setQuestions((prev) =>
+                              prev.map((item, i) => (i === idx ? { ...item, options: [...item.options, ''] } : item))
+                            )
+                          }
+                          className="text-xs font-medium text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
+                        >
+                          <Plus className="w-3 h-3" /> Add option
+                        </button>
+                      </div>
+                    )}
+
+                    {q.type === 'text' && (
+                      <div className="pl-1 flex items-center gap-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Limit answer to</span>
+                        <input
+                          type="number"
+                          min={1}
+                          className="input text-sm py-1.5 w-20"
+                          placeholder="None"
+                          value={q.maxLength}
+                          onChange={(e) =>
+                            setQuestions((prev) =>
+                              prev.map((item, i) => (i === idx ? { ...item, maxLength: e.target.value } : item))
+                            )
+                          }
+                        />
+                        <select
+                          className="input text-sm py-1.5 w-auto"
+                          value={q.maxLengthUnit}
+                          onChange={(e) =>
+                            setQuestions((prev) =>
+                              prev.map((item, i) =>
+                                i === idx ? { ...item, maxLengthUnit: e.target.value as 'words' | 'characters' } : item
+                              )
+                            )
+                          }
+                        >
+                          <option value="words">words</option>
+                          <option value="characters">characters</option>
+                        </select>
+                        <span className="text-xs text-gray-400">(optional)</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

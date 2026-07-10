@@ -289,6 +289,35 @@ export default function ApplicantsPage() {
                 </div>
               )}
 
+              {/* Screening questions */}
+              {selected.answers && selected.answers.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Screening Questions</h3>
+                  <div className="space-y-3">
+                    {selected.answers.map((a) => (
+                      <div key={a.questionId} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white mb-1.5">{a.question}</p>
+                        {Array.isArray(a.answer) ? (
+                          a.answer.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {a.answer.map((opt) => (
+                                <span key={opt} className="badge-blue">{opt}</span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-400 italic">No answer</p>
+                          )
+                        ) : (
+                          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                            {a.answer || <span className="text-gray-400 italic">No answer</span>}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Cover letter */}
               {selected.coverLetter && (
                 <div>
