@@ -415,7 +415,7 @@ export default function PostJobPage() {
                         />
                       </div>
                       <select
-                        className="input text-sm w-auto pt-2.5"
+                        className="input text-sm !w-auto pt-2.5"
                         value={q.type}
                         onChange={(e) =>
                           setQuestions((prev) =>
@@ -512,7 +512,7 @@ export default function PostJobPage() {
                         <input
                           type="number"
                           min={1}
-                          className="input text-sm py-1.5 w-20"
+                          className="input text-sm py-1.5 !w-20"
                           placeholder="None"
                           value={q.maxLength}
                           onChange={(e) =>
@@ -522,7 +522,7 @@ export default function PostJobPage() {
                           }
                         />
                         <select
-                          className="input text-sm py-1.5 w-auto"
+                          className="input text-sm py-1.5 !w-auto"
                           value={q.maxLengthUnit}
                           onChange={(e) =>
                             setQuestions((prev) =>
