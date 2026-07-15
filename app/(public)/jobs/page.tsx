@@ -74,7 +74,7 @@ function daysAgo(date: string) {
 
 function CompanyAvatar({ logo, name, color }: { logo?: string; name: string; color: string }) {
   if (logo) {
-    return <img src={logo} alt={name} className="w-14 h-14 rounded-2xl object-cover shadow-md flex-shrink-0 bg-gray-100 dark:bg-gray-800" />;
+    return <Image src={logo} alt={name} width={56} height={56} className="rounded-2xl object-cover shadow-md flex-shrink-0 bg-gray-100 dark:bg-gray-800" />;
   }
   return (
     <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0 shadow-md text-white font-bold text-xl`}>

@@ -83,9 +83,10 @@ export function AuthCarousel() {
             index === currentSlide ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <img
+          <Image
             src={slide.image}
             alt={slide.title}
+            fill
             className="w-full h-full object-cover"
           />
         </div>
