@@ -16,7 +16,7 @@ interface JobQuestion {
   _id: string;
   question: string;
   required: boolean;
-  type?: 'text' | 'single_choice' | 'multi_choice';
+  type?: 'text' | 'paragraph' | 'single_choice' | 'multi_choice' | 'dropdown' | 'date';
   options?: string[];
   maxLength?: number;
   maxLengthUnit?: 'words' | 'characters';
@@ -211,7 +211,7 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
         toast.error(`Please answer: "${q.question}"`);
         return;
       }
-      if ((q.type ?? 'text') === 'text' && q.maxLength && typeof a === 'string' && a.trim()) {
+      if ((q.type === 'text' || q.type === 'paragraph') && q.maxLength && typeof a === 'string' && a.trim()) {
         const count = q.maxLengthUnit === 'characters' ? a.length : countWords(a);
         if (count > q.maxLength) {
           toast.error(`"${q.question}" exceeds the ${q.maxLength}-${q.maxLengthUnit === 'characters' ? 'character' : 'word'} limit`);
@@ -475,7 +475,7 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
                       onClick={() => setShowModal(true)}
                       className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 text-base font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 rounded-2xl shadow-md hover:shadow-emerald-200 dark:hover:shadow-emerald-900/30 transition-all duration-200 active:scale-95"
                     >
-                      Apply for this job <ExternalLink className="w-4 h-4" />
+                      Apply for this opportunity <ExternalLink className="w-4 h-4" />
                     </button>
                   )}
                   <button
@@ -503,7 +503,7 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
                     href={loginApplyRedirect}
                     className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 text-base font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 rounded-2xl shadow-md hover:shadow-emerald-200 dark:hover:shadow-emerald-900/30 transition-all duration-200 active:scale-95"
                   >
-                    Apply for this job <ExternalLink className="w-4 h-4" />
+                    Apply for this opportunity <ExternalLink className="w-4 h-4" />
                   </Link>
                   <Link
                     href={loginSaveRedirect}
@@ -545,7 +545,7 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
             {/* Modal header */}
             <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <div>
-                <h2 className="font-bold text-gray-900 dark:text-white text-lg">Apply for this job</h2>
+                <h2 className="font-bold text-gray-900 dark:text-white text-lg">Apply for this opportunity</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{job.title} · {companyName}</p>
               </div>
               <button
@@ -656,6 +656,46 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
                             </label>
                           ))}
                         </div>
+                      ) : q.type === 'dropdown' ? (
+                        <select
+                          className="input"
+                          value={(answers[q._id] as string) ?? ''}
+                          onChange={(e) => setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }))}
+                        >
+                          <option value="">Select an option</option>
+                          {q.options?.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      ) : q.type === 'date' ? (
+                        <input
+                          type="date"
+                          className="input"
+                          value={(answers[q._id] as string) ?? ''}
+                          onChange={(e) => setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }))}
+                        />
+                      ) : q.type === 'paragraph' ? (
+                        <>
+                          <textarea
+                            className="input resize-none"
+                            rows={4}
+                            placeholder="Your answer..."
+                            value={(answers[q._id] as string) ?? ''}
+                            onChange={(e) =>
+                              setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }))
+                            }
+                          />
+                          {q.maxLength && (() => {
+                            const text = (answers[q._id] as string) ?? '';
+                            const count = q.maxLengthUnit === 'characters' ? text.length : countWords(text);
+                            const over = count > q.maxLength!;
+                            return (
+                              <p className={`text-xs mt-1 text-right ${over ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                                {count} / {q.maxLength} {q.maxLengthUnit === 'characters' ? 'characters' : 'words'}
+                              </p>
+                            );
+                          })()}
+                        </>
                       ) : (
                         <>
                           <textarea

@@ -10,7 +10,7 @@ import { ArrowLeft, Save, Globe, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { JOB_INDUSTRIES } from '@/lib/constants';
 
-type QuestionType = 'text' | 'single_choice' | 'multi_choice';
+type QuestionType = 'text' | 'paragraph' | 'single_choice' | 'multi_choice' | 'dropdown' | 'date';
 
 interface JobQuestion {
   question: string;
@@ -138,8 +138,10 @@ export default function PostJobPage() {
           question: q.question.trim(),
           required: q.required,
           type: q.type,
-          options: q.type === 'text' ? [] : q.options.map((o) => o.trim()).filter(Boolean),
-          ...(q.type === 'text' && q.maxLength.trim()
+          options: (q.type === 'single_choice' || q.type === 'multi_choice' || q.type === 'dropdown')
+            ? q.options.map((o) => o.trim()).filter(Boolean)
+            : [],
+          ...((q.type === 'text' || q.type === 'paragraph') && q.maxLength.trim()
             ? { maxLength: Number(q.maxLength), maxLengthUnit: q.maxLengthUnit }
             : {}),
         })),
@@ -149,12 +151,12 @@ export default function PostJobPage() {
   function questionsError(): string | null {
     for (const q of questions) {
       if (!q.question.trim()) continue;
-      if (q.type !== 'text') {
+      if (q.type === 'single_choice' || q.type === 'multi_choice' || q.type === 'dropdown') {
         const validOptions = q.options.map((o) => o.trim()).filter(Boolean);
         if (validOptions.length < 2) {
           return `"${q.question}" needs at least 2 options`;
         }
-      } else if (q.maxLength.trim()) {
+      } else if ((q.type === 'text' || q.type === 'paragraph') && q.maxLength.trim()) {
         const n = Number(q.maxLength);
         if (!Number.isInteger(n) || n <= 0) {
           return `"${q.question}" has an invalid max length`;
@@ -424,7 +426,9 @@ export default function PostJobPage() {
                                 ? {
                                     ...item,
                                     type: e.target.value as QuestionType,
-                                    options: e.target.value === 'text' ? [] : item.options.length ? item.options : ['', ''],
+                                    options: (e.target.value === 'single_choice' || e.target.value === 'multi_choice' || e.target.value === 'dropdown')
+                                      ? (item.options.length ? item.options : ['', ''])
+                                      : [],
                                   }
                                 : item
                             )
@@ -432,8 +436,11 @@ export default function PostJobPage() {
                         }
                       >
                         <option value="text">Short answer</option>
+                        <option value="paragraph">Paragraph</option>
                         <option value="single_choice">Single choice (radio)</option>
                         <option value="multi_choice">Multiple choice (checkbox)</option>
+                        <option value="dropdown">Dropdown</option>
+                        <option value="date">Date</option>
                       </select>
                       <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap pt-2.5 cursor-pointer">
                         <input
@@ -457,7 +464,7 @@ export default function PostJobPage() {
                       </button>
                     </div>
 
-                    {q.type !== 'text' && (
+                    {(q.type === 'single_choice' || q.type === 'multi_choice' || q.type === 'dropdown') && (
                       <div className="pl-1 space-y-2">
                         {q.options.map((opt, optIdx) => (
                           <div key={optIdx} className="flex items-center gap-2">
@@ -506,7 +513,7 @@ export default function PostJobPage() {
                       </div>
                     )}
 
-                    {q.type === 'text' && (
+                    {(q.type === 'text' || q.type === 'paragraph') && (
                       <div className="pl-1 flex items-center gap-2">
                         <span className="text-xs text-gray-500 dark:text-gray-400">Limit answer to</span>
                         <input

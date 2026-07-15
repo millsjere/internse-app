@@ -101,7 +101,7 @@ export interface IJob {
     _id: string;
     question: string;
     required: boolean;
-    type?: 'text' | 'single_choice' | 'multi_choice';
+    type?: 'text' | 'paragraph' | 'single_choice' | 'multi_choice' | 'dropdown' | 'date';
     options?: string[];
     maxLength?: number;
     maxLengthUnit?: 'words' | 'characters';
@@ -143,7 +143,7 @@ export interface IApplication {
   answers: Array<{
     questionId: string;
     question: string;
-    type?: 'text' | 'single_choice' | 'multi_choice';
+    type?: 'text' | 'paragraph' | 'single_choice' | 'multi_choice' | 'dropdown' | 'date';
     options?: string[];
     answer: string | string[];
   }>;
