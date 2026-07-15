@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { Spinner } from '@/app/components/ui/Spinner';
 import { Badge, jobStatusBadge } from '@/app/components/ui/Badge';
+import { VerificationStatusCard } from '@/app/components/employer/VerificationStatusCard';
 import { formatRelativeDate } from '@/lib/utils';
 import { IJob } from '@/types';
 import {
@@ -22,19 +23,30 @@ interface Stats {
   totalViews: number;
 }
 
+interface VerificationStatus {
+  status: 'not_submitted' | 'pending' | 'approved' | 'rejected';
+  canPostJobs: boolean;
+  rejectionReason?: string;
+}
+
 export default function EmployerOverviewPage() {
   const { user } = useAuthStore();
   const [jobs, setJobs] = useState<IJob[]>([]);
   const [stats, setStats] = useState<Stats>({ totalJobs: 0, publishedJobs: 0, draftJobs: 0, totalApplications: 0, totalViews: 0 });
+  const [verification, setVerification] = useState<VerificationStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   const companyName = (user as any)?.companyName ?? 'Company';
 
   const load = useCallback(async () => {
     try {
-      const res = await apiClient.getCompanyJobs();
-      if (res.success && Array.isArray(res.data)) {
-        const list: IJob[] = res.data;
+      const [jobsRes, verificationRes] = await Promise.all([
+        apiClient.getCompanyJobs(),
+        apiClient.getVerificationStatus(),
+      ]);
+
+      if (jobsRes.success && Array.isArray(jobsRes.data)) {
+        const list: IJob[] = jobsRes.data;
         setJobs(list.slice(0, 5));
         setStats({
           totalJobs: list.length,
@@ -43,6 +55,10 @@ export default function EmployerOverviewPage() {
           totalApplications: list.reduce((acc, j) => acc + (j.applicationCount ?? 0), 0),
           totalViews: list.reduce((acc, j) => acc + (j.views ?? 0), 0),
         });
+      }
+
+      if (verificationRes.success) {
+        setVerification(verificationRes.data);
       }
     } finally {
       setLoading(false);
@@ -70,6 +86,9 @@ export default function EmployerOverviewPage() {
           </Link>
         }
       />
+
+      {/* Verification Status */}
+      {verification && <div className="mb-6"><VerificationStatusCard verification={verification} /></div>}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Users, Building2, Briefcase,
-  Settings, LogOut,
+  Settings, LogOut, Shield,
 } from 'lucide-react';
 import { useAdminStore } from '@/lib/adminStore';
 import { adminApi } from '@/lib/adminApi';
@@ -38,6 +38,7 @@ const adminNav: NavGroup[] = [
       { label: 'Users',     href: '/admin/users',     icon: Users },
       { label: 'Companies', href: '/admin/companies', icon: Building2 },
       { label: 'Jobs',      href: '/admin/jobs',      icon: Briefcase },
+      { label: 'Verifications', href: '/admin/verifications', icon: Shield },
     ],
   },
   {

@@ -67,6 +67,16 @@ export interface ICompany {
     paystackCustomerId?: string;
     paystackSubscriptionId?: string;
   };
+  businessVerification: {
+    status: 'not_submitted' | 'pending' | 'approved' | 'rejected';
+    registrationDocument?: string;
+    registrationNumber?: string;
+    verifiedAt?: string;
+    rejectionReason?: string;
+    submittedAt?: string;
+    adminNotes?: string;
+  };
+  canPostJobs: boolean;
   createdAt: string;
   updatedAt: string;
 }

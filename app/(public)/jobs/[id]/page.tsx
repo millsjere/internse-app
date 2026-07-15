@@ -678,12 +678,19 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
                         <>
                           <textarea
                             className="input resize-none"
-                            rows={4}
+                            style={{ minHeight: '120px', overflow: 'hidden' }}
+                            rows={1}
                             placeholder="Your answer..."
                             value={(answers[q._id] as string) ?? ''}
-                            onChange={(e) =>
-                              setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }))
-                            }
+                            onChange={(e) => {
+                              setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }));
+                              e.currentTarget.style.height = 'auto';
+                              e.currentTarget.style.height = Math.max(120, e.currentTarget.scrollHeight) + 'px';
+                            }}
+                            onInput={(e) => {
+                              e.currentTarget.style.height = 'auto';
+                              e.currentTarget.style.height = Math.max(120, e.currentTarget.scrollHeight) + 'px';
+                            }}
                           />
                           {q.maxLength && (() => {
                             const text = (answers[q._id] as string) ?? '';
@@ -700,12 +707,19 @@ function JobDetailPageInner({ params }: { params: Promise<{ id: string }> }) {
                         <>
                           <textarea
                             className="input resize-none"
-                            rows={2}
+                            style={{ minHeight: '80px', overflow: 'hidden' }}
+                            rows={1}
                             placeholder="Your answer..."
                             value={(answers[q._id] as string) ?? ''}
-                            onChange={(e) =>
-                              setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }))
-                            }
+                            onChange={(e) => {
+                              setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }));
+                              e.currentTarget.style.height = 'auto';
+                              e.currentTarget.style.height = Math.max(80, e.currentTarget.scrollHeight) + 'px';
+                            }}
+                            onInput={(e) => {
+                              e.currentTarget.style.height = 'auto';
+                              e.currentTarget.style.height = Math.max(80, e.currentTarget.scrollHeight) + 'px';
+                            }}
                           />
                           {q.maxLength && (() => {
                             const text = (answers[q._id] as string) ?? '';

@@ -202,6 +202,25 @@ class AdminApiClient {
     return res.data;
   }
 
+  // ─── Business Verifications ──────────────────────────────
+  async getPendingVerifications() {
+    const res = await this.client.get('/verifications/pending');
+    return res.data;
+  }
+
+  async approveCompanyVerification(companyId: string, adminNotes?: string) {
+    const res = await this.client.patch(`/verifications/${companyId}/approve`, { adminNotes });
+    return res.data;
+  }
+
+  async rejectCompanyVerification(companyId: string, rejectionReason: string, adminNotes?: string) {
+    const res = await this.client.patch(`/verifications/${companyId}/reject`, {
+      rejectionReason,
+      adminNotes,
+    });
+    return res.data;
+  }
+
 }
 
 export const adminApi = new AdminApiClient();

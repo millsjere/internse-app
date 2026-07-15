@@ -371,6 +371,27 @@ class ApiClient {
     return response.data;
   }
 
+  // Business verification endpoints
+  async uploadBusinessDocument(file: File): Promise<ApiResponse> {
+    const formData = new FormData();
+    formData.append('document', file);
+    const response = await this.client.post('/user/company/verification/upload', formData);
+    return response.data;
+  }
+
+  async submitBusinessVerification(registrationNumber: string, registrationDocument: string): Promise<ApiResponse> {
+    const response = await this.client.post('/user/company/verification/submit', {
+      registrationNumber,
+      registrationDocument,
+    });
+    return response.data;
+  }
+
+  async getVerificationStatus(): Promise<ApiResponse> {
+    const response = await this.client.get('/user/company/verification/status');
+    return response.data;
+  }
+
   // Notification endpoints
   async getUserNotifications(): Promise<ApiResponse> {
     const response = await this.client.get('/notifications/user');

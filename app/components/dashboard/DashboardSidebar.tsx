@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Briefcase, Users, Settings,
-  User, Heart, FileText, HelpCircle,
+  User, Heart, FileText, HelpCircle, Shield,
 } from 'lucide-react';
 
 interface NavItem {
@@ -21,10 +21,11 @@ interface NavItem {
 }
 
 const employerNav: NavItem[] = [
-  { label: 'Overview',    href: '/employer',            icon: LayoutDashboard, exact: true, roles: ['admin'] },
-  { label: 'Jobs',        href: '/employer/jobs',       icon: Briefcase },
-  { label: 'Applicants',  href: '/employer/applicants', icon: Users },
-  { label: 'Settings',    href: '/employer/settings',   icon: Settings, roles: ['admin'] },
+  { label: 'Overview',      href: '/employer',              icon: LayoutDashboard, exact: true, roles: ['admin'] },
+  { label: 'Jobs',          href: '/employer/jobs',         icon: Briefcase },
+  { label: 'Applicants',    href: '/employer/applicants',   icon: Users },
+  { label: 'Verification',  href: '/employer/verification', icon: Shield, roles: ['admin'] },
+  { label: 'Settings',      href: '/employer/settings',     icon: Settings, roles: ['admin'] },
 ];
 
 const userNav: NavItem[] = [
