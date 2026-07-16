@@ -24,7 +24,6 @@ export default function VerificationPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [registrationNumber, setRegistrationNumber] = useState('');
-  const [registrationDocument, setRegistrationDocument] = useState('');
   const [documentFile, setDocumentFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -60,50 +59,32 @@ export default function VerificationPage() {
     e.target.value = '';
   }
 
-  async function handleUploadDocument() {
-    if (!documentFile) {
-      toast.error('Please select a file');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const res = await apiClient.uploadBusinessDocument(documentFile);
-      if (res.success) {
-        setRegistrationDocument(res.data.documentUrl);
-        setDocumentFile(null);
-        toast.success('Document uploaded successfully. Now fill in registration number and submit.');
-      } else {
-        toast.error(res.message || 'Failed to upload document');
-      }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to upload document');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   async function handleSubmitVerification() {
     if (!registrationNumber.trim()) {
       toast.error('Please enter registration number');
       return;
     }
-    if (!registrationDocument) {
-      toast.error('Please upload a document');
+    if (!documentFile) {
+      toast.error('Please select a document');
       return;
     }
 
     setSubmitting(true);
     try {
-      const res = await apiClient.submitBusinessVerification(registrationNumber, registrationDocument);
-      if (res.success) {
+      const uploadRes = await apiClient.uploadBusinessDocument(documentFile);
+      if (!uploadRes.success) {
+        toast.error(uploadRes.message || 'Failed to upload document');
+        return;
+      }
+
+      const submitRes = await apiClient.submitBusinessVerification(registrationNumber, uploadRes.data.documentUrl);
+      if (submitRes.success) {
         toast.success('Verification submitted! Awaiting admin review.');
-        setStatus(res.data);
+        setStatus(submitRes.data);
         setRegistrationNumber('');
-        setRegistrationDocument('');
         setDocumentFile(null);
       } else {
-        toast.error(res.message || 'Failed to submit verification');
+        toast.error(submitRes.message || 'Failed to submit verification');
       }
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Something went wrong');
@@ -215,46 +196,19 @@ export default function VerificationPage() {
                     onChange={handleFileChange}
                   />
 
-                  {registrationDocument ? (
-                    <div className="flex items-center justify-between gap-2 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950">
+                  {documentFile ? (
+                    <div className="flex items-center justify-between gap-2 p-3 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950">
                       <div className="flex items-center gap-2 min-w-0">
-                        <FileText className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate">Document uploaded</span>
+                        <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{documentFile.name}</span>
                       </div>
                       <button
                         type="button"
-                        onClick={() => {
-                          setRegistrationDocument('');
-                          setDocumentFile(null);
-                        }}
+                        onClick={() => setDocumentFile(null)}
+                        disabled={submitting}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                       >
                         ✕
-                      </button>
-                    </div>
-                  ) : documentFile ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2 p-3 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{documentFile.name}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setDocumentFile(null)}
-                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleUploadDocument}
-                        disabled={submitting}
-                        className="btn btn-primary w-full"
-                      >
-                        {submitting ? <Spinner size="sm" /> : <Upload className="w-4 h-4" />}
-                        {submitting ? 'Uploading...' : 'Upload Document'}
                       </button>
                     </div>
                   ) : (
