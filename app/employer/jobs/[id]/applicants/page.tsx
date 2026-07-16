@@ -379,7 +379,10 @@ export default function ApplicantsPage() {
                 <div>
                   <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Resume</h3>
                   <a
-                    href={apiClient.getApplicationResumeDownloadUrl(selected._id)}
+                    href={selected.resume}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center gap-2.5 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors group"
                   >
                     <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
