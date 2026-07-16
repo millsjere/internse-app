@@ -184,6 +184,8 @@ export interface ApiResponse<T = any> {
   message: string;
   data?: T;
   error?: string;
+  pagination?: { page: number; limit: number; total: number; totalPages: number };
+  counts?: Record<string, number>;
 }
 
 export interface PaginatedResponse<T> {

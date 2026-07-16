@@ -15,11 +15,13 @@ import toast from 'react-hot-toast';
 import {
   ArrowLeft, Users, X, ExternalLink, CheckCircle, XCircle,
   Briefcase, GraduationCap, FileText, Mail, Phone, MapPin,
-  Calendar, Clock,
+  Calendar, Clock, Download, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type StatusFilter = 'all' | 'pending' | 'reviewing' | 'accepted' | 'rejected';
+
+const PAGE_SIZE = 50;
 
 export default function ApplicantsPage() {
   const { id: jobId } = useParams<{ id: string }>();
@@ -29,34 +31,47 @@ export default function ApplicantsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [jobTitle, setJobTitle] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [counts, setCounts] = useState({ all: 0, pending: 0, reviewing: 0, accepted: 0, rejected: 0 });
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiClient.getJobApplications(jobId);
+      const res = await apiClient.getJobApplications(jobId, { page, limit: PAGE_SIZE, status: statusFilter });
       if (res.success) {
         const apps: IApplication[] = Array.isArray(res.data) ? res.data : res.data?.applications ?? [];
         setApplications(apps);
         if (apps[0]?.job?.title) setJobTitle(apps[0].job.title);
+        if (res.pagination) {
+          setTotalPages(res.pagination.totalPages);
+          setTotal(res.pagination.total);
+        }
+        if (res.counts) {
+          setCounts({ all: 0, pending: 0, reviewing: 0, accepted: 0, rejected: 0, ...res.counts });
+        }
       }
     } catch {
       toast.error('Failed to load applicants');
     } finally {
       setLoading(false);
     }
-  }, [jobId]);
+  }, [jobId, page, statusFilter]);
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = statusFilter === 'all' ? applications : applications.filter((a) => a.status === statusFilter);
+  const filtered = applications;
 
-  const counts = {
-    all: applications.length,
-    pending: applications.filter((a) => a.status === 'pending').length,
-    reviewing: applications.filter((a) => a.status === 'reviewing').length,
-    accepted: applications.filter((a) => a.status === 'accepted').length,
-    rejected: applications.filter((a) => a.status === 'rejected').length,
-  };
+  function selectStatusFilter(status: StatusFilter) {
+    setStatusFilter(status);
+    setPage(1);
+  }
+
+  function handleExport() {
+    const url = apiClient.getJobApplicationsExportUrl(jobId, statusFilter);
+    window.open(url, '_blank');
+  }
 
   async function updateStatus(appId: string, status: 'accepted' | 'rejected') {
     setActionLoading(appId + status);
@@ -96,6 +111,11 @@ export default function ApplicantsPage() {
       <PageHeader
         title="Applicants"
         description={jobTitle ? `Applications for "${jobTitle}"` : 'Review and manage applicants'}
+        action={
+          <button onClick={handleExport} className="btn btn-outline btn-sm">
+            <Download className="w-3.5 h-3.5" /> Export CSV
+          </button>
+        }
       />
 
       {/* Tabs */}
@@ -103,7 +123,7 @@ export default function ApplicantsPage() {
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setStatusFilter(t.key)}
+            onClick={() => selectStatusFilter(t.key)}
             className={cn(
               'px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
               statusFilter === t.key
@@ -175,6 +195,32 @@ export default function ApplicantsPage() {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && total > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6">
+          <p className="text-xs text-gray-400">
+            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="btn btn-outline btn-sm"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Prev
+            </button>
+            <span className="text-sm text-gray-500 px-2">Page {page} of {totalPages}</span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="btn btn-outline btn-sm"
+            >
+              Next <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       )}
 

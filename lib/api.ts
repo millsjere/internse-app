@@ -218,9 +218,15 @@ class ApiClient {
     return response.data;
   }
 
-  async getJobApplications(jobId: string): Promise<ApiResponse> {
-    const response = await this.client.get(`/jobs/${jobId}/applications`);
+  async getJobApplications(jobId: string, params?: { page?: number; limit?: number; status?: string }): Promise<ApiResponse> {
+    const response = await this.client.get(`/jobs/${jobId}/applications`, { params });
     return response.data;
+  }
+
+  getJobApplicationsExportUrl(jobId: string, status?: string): string {
+    const baseURL = this.client.defaults.baseURL;
+    const query = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
+    return `${baseURL}/jobs/${jobId}/applications/export${query}`;
   }
 
   // User applications (jobs user has applied to)
