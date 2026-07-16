@@ -229,6 +229,11 @@ class ApiClient {
     return `${baseURL}/jobs/${jobId}/applications/export${query}`;
   }
 
+  getApplicationResumeDownloadUrl(applicationId: string): string {
+    const baseURL = this.client.defaults.baseURL;
+    return `${baseURL}/jobs/company/applications/${applicationId}/resume`;
+  }
+
   // User applications (jobs user has applied to)
   async getUserApplications(): Promise<ApiResponse> {
     try {

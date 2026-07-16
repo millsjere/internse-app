@@ -9,11 +9,11 @@ import { EmptyState } from '@/app/components/ui/EmptyState';
 import { Spinner } from '@/app/components/ui/Spinner';
 import { Avatar } from '@/app/components/ui/Avatar';
 import { applicationStatusBadge, Badge } from '@/app/components/ui/Badge';
-import { formatDate, formatRelativeDate } from '@/lib/utils';
+import { formatDate, formatDateTime, formatRelativeDate } from '@/lib/utils';
 import { IApplication, IUser } from '@/types';
 import toast from 'react-hot-toast';
 import {
-  ArrowLeft, Users, X, ExternalLink, CheckCircle, XCircle,
+  ArrowLeft, Users, X, CheckCircle, XCircle,
   Briefcase, GraduationCap, FileText, Mail, Phone, MapPin,
   Calendar, Clock, Download, ChevronLeft, ChevronRight,
 } from 'lucide-react';
@@ -253,7 +253,7 @@ export default function ApplicantsPage() {
                 </div>
                 <p className="text-xs text-gray-400 flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  Applied {formatDate(selected.appliedAt)}
+                  Applied {formatDateTime(selected.appliedAt)}
                 </p>
               </div>
 
@@ -379,14 +379,12 @@ export default function ApplicantsPage() {
                 <div>
                   <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Resume</h3>
                   <a
-                    href={selected.resume}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={apiClient.getApplicationResumeDownloadUrl(selected._id)}
                     className="flex items-center gap-2.5 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors group"
                   >
                     <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                    <span className="flex-1 text-sm font-medium text-gray-900 dark:text-white">View Resume</span>
-                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-blue-500" />
+                    <span className="flex-1 text-sm font-medium text-gray-900 dark:text-white">Download Resume</span>
+                    <Download className="w-4 h-4 text-gray-400 group-hover:text-blue-500" />
                   </a>
                 </div>
               )}
