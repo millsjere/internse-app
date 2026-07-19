@@ -526,7 +526,7 @@ export default function ApplicantsPage() {
         <div className="flex items-center gap-1.5 flex-wrap mb-4 -mt-2">
           {search && (
             <span className="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
-              "{search}"
+              &ldquo;{search}&rdquo;
               <button onClick={() => { setSearchInput(''); setSearch(''); setPage(1); }}><X className="w-3 h-3" /></button>
             </span>
           )}
