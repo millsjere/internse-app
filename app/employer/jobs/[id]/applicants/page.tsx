@@ -1,27 +1,90 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { apiClient } from '@/lib/api';
+import { apiClient, ApplicationFilterParams } from '@/lib/api';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { Spinner } from '@/app/components/ui/Spinner';
+import { ConfirmModal } from '@/app/components/ui/ConfirmModal';
 import { Avatar } from '@/app/components/ui/Avatar';
 import { applicationStatusBadge, Badge } from '@/app/components/ui/Badge';
 import { formatDate, formatDateTime, formatRelativeDate } from '@/lib/utils';
-import { IApplication, IUser } from '@/types';
+import { IApplication, IJob, IUser } from '@/types';
 import toast from 'react-hot-toast';
 import {
   ArrowLeft, Users, X, CheckCircle, XCircle,
   Briefcase, GraduationCap, FileText, Mail, Phone, MapPin,
   Calendar, Clock, Download, ChevronLeft, ChevronRight,
+  Search, SlidersHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type StatusFilter = 'all' | 'pending' | 'reviewing' | 'accepted' | 'rejected';
+type DatePreset = 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'custom';
+type JobQuestion = IJob['questions'][number];
+
+const DATE_PRESETS: { key: DatePreset; label: string }[] = [
+  { key: 'thisWeek', label: 'This week' },
+  { key: 'lastWeek', label: 'Last week' },
+  { key: 'thisMonth', label: 'This month' },
+  { key: 'lastMonth', label: 'Last month' },
+  { key: 'custom', label: 'Custom' },
+];
+
+// Question types with discrete/structured answers, safe to filter by exact value.
+// Free-text types (text/paragraph) are excluded — "contains" matching isn't offered.
+const FILTERABLE_QUESTION_TYPES = new Set(['single_choice', 'multi_choice', 'dropdown', 'date']);
+
+// The shared `.input` class bakes its own padding/font-size into a rule that's declared
+// after Tailwind's utility layer in globals.css, so utility overrides (e.g. `pl-9`, `py-1.5`)
+// lose the cascade. These controls sit next to a `btn-sm` and need to match its height exactly,
+// so we bypass `.input` and write the utilities out directly (h-9 pinned on both).
+const compactInputClass = 'h-9 px-3 text-sm border border-gray-300 dark:border-gray-700 rounded-lg ' +
+  'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 ' +
+  'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary dark:focus:ring-blue-500/30 dark:focus:border-blue-500 ' +
+  'transition-colors duration-150';
+
+function toDateInputLocal(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function getPresetRange(preset: DatePreset): { from: string; to: string } | null {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (preset === 'thisWeek') {
+    const start = new Date(today);
+    start.setDate(start.getDate() - start.getDay());
+    return { from: toDateInputLocal(start), to: toDateInputLocal(today) };
+  }
+  if (preset === 'lastWeek') {
+    const thisWeekStart = new Date(today);
+    thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
+    const start = new Date(thisWeekStart);
+    start.setDate(start.getDate() - 7);
+    const end = new Date(thisWeekStart);
+    end.setDate(end.getDate() - 1);
+    return { from: toDateInputLocal(start), to: toDateInputLocal(end) };
+  }
+  if (preset === 'thisMonth') {
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    return { from: toDateInputLocal(start), to: toDateInputLocal(today) };
+  }
+  if (preset === 'lastMonth') {
+    const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const end = new Date(today.getFullYear(), today.getMonth(), 0);
+    return { from: toDateInputLocal(start), to: toDateInputLocal(end) };
+  }
+  return null;
+}
 
 const PAGE_SIZE = 50;
+const EXPORT_BATCH_SIZE = 1000;
 
 export default function ApplicantsPage() {
   const { id: jobId } = useParams<{ id: string }>();
@@ -31,19 +94,79 @@ export default function ApplicantsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [jobTitle, setJobTitle] = useState('');
+  const [questions, setQuestions] = useState<JobQuestion[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [counts, setCounts] = useState({ all: 0, pending: 0, reviewing: 0, accepted: 0, rejected: 0 });
 
+  // Search
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+
+  // Advanced filters
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+  const [datePreset, setDatePreset] = useState<DatePreset | null>(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [customFromDraft, setCustomFromDraft] = useState('');
+  const [customToDraft, setCustomToDraft] = useState('');
+  const [questionId, setQuestionId] = useState('');
+  const [answerValue, setAnswerValue] = useState('');
+
+  const hasAdvancedFilters = Boolean(dateFrom || dateTo || (questionId && answerValue));
+  const selectedQuestion = questions.find((q) => q._id === questionId);
+  const filterableQuestions = questions.filter((q) => q.type && FILTERABLE_QUESTION_TYPES.has(q.type));
+
+  // Export
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportCount, setExportCount] = useState<number | null>(null);
+  const [exportCountLoading, setExportCountLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportBatch, setExportBatch] = useState<{ current: number; total: number } | null>(null);
+
+  // Debounce search input before it drives the API call
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  // Close the filter popover on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter params shared by the list fetch, the export count check, and each export batch
+  const currentFilterParams = useCallback((): Omit<ApplicationFilterParams, 'page' | 'limit'> => ({
+    status: statusFilter,
+    search: search || undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+    questionId: questionId && answerValue ? questionId : undefined,
+    answer: questionId && answerValue ? answerValue : undefined,
+  }), [statusFilter, search, dateFrom, dateTo, questionId, answerValue]);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiClient.getJobApplications(jobId, { page, limit: PAGE_SIZE, status: statusFilter });
+      const res = await apiClient.getJobApplications(jobId, { page, limit: PAGE_SIZE, ...currentFilterParams() });
       if (res.success) {
         const apps: IApplication[] = Array.isArray(res.data) ? res.data : res.data?.applications ?? [];
         setApplications(apps);
-        if (apps[0]?.job?.title) setJobTitle(apps[0].job.title);
+        if (res.job) {
+          setJobTitle(res.job.title ?? '');
+          setQuestions(res.job.questions ?? []);
+        }
         if (res.pagination) {
           setTotalPages(res.pagination.totalPages);
           setTotal(res.pagination.total);
@@ -57,20 +180,132 @@ export default function ApplicantsPage() {
     } finally {
       setLoading(false);
     }
-  }, [jobId, page, statusFilter]);
+  }, [jobId, page, currentFilterParams]);
 
   useEffect(() => { load(); }, [load]);
 
   const filtered = applications;
+
+  function selectDatePreset(preset: DatePreset) {
+    if (preset === 'custom') {
+      setCustomFromDraft(dateFrom);
+      setCustomToDraft(dateTo);
+      setDatePreset('custom');
+      return;
+    }
+    const range = getPresetRange(preset);
+    if (range) {
+      setDatePreset(preset);
+      setDateFrom(range.from);
+      setDateTo(range.to);
+      setPage(1);
+    }
+  }
+
+  function applyCustomRange() {
+    setDateFrom(customFromDraft);
+    setDateTo(customToDraft);
+    setPage(1);
+  }
+
+  function clearDateFilter() {
+    setDatePreset(null);
+    setDateFrom('');
+    setDateTo('');
+    setCustomFromDraft('');
+    setCustomToDraft('');
+    setPage(1);
+  }
+
+  function selectQuestionFilter(id: string) {
+    setQuestionId(id);
+    setAnswerValue('');
+  }
+
+  function clearQuestionFilter() {
+    setQuestionId('');
+    setAnswerValue('');
+    setPage(1);
+  }
+
+  function clearAllFilters() {
+    setSearchInput('');
+    setSearch('');
+    clearDateFilter();
+    clearQuestionFilter();
+  }
 
   function selectStatusFilter(status: StatusFilter) {
     setStatusFilter(status);
     setPage(1);
   }
 
-  function handleExport() {
-    const url = apiClient.getJobApplicationsExportUrl(jobId, statusFilter);
-    window.open(url, '_blank');
+  async function openExportModal() {
+    setExportModalOpen(true);
+    setExportCount(null);
+    setExportCountLoading(true);
+    try {
+      const res = await apiClient.getJobApplications(jobId, { page: 1, limit: 1, ...currentFilterParams() });
+      setExportCount(res.success ? res.pagination?.total ?? 0 : 0);
+    } catch {
+      toast.error('Failed to check applicant count');
+      setExportModalOpen(false);
+    } finally {
+      setExportCountLoading(false);
+    }
+  }
+
+  function closeExportModal() {
+    if (exporting) return;
+    setExportModalOpen(false);
+    setExportBatch(null);
+  }
+
+  async function confirmExport() {
+    if (!exportCount) {
+      toast.error('No applicants match the current filters');
+      return;
+    }
+    setExporting(true);
+    const totalBatches = Math.ceil(exportCount / EXPORT_BATCH_SIZE);
+    setExportBatch({ current: 0, total: totalBatches });
+    try {
+      let combined = '';
+      for (let i = 1; i <= totalBatches; i++) {
+        setExportBatch({ current: i, total: totalBatches });
+        const csv = await apiClient.getJobApplicationsExportBatch(jobId, {
+          page: i,
+          limit: EXPORT_BATCH_SIZE,
+          ...currentFilterParams(),
+        });
+        if (i === 1) {
+          combined = csv;
+        } else {
+          // Drop the repeated header row (and BOM) from every batch after the first
+          const lines = csv.replace(/^﻿/, '').split('\n');
+          combined += '\n' + lines.slice(1).join('\n');
+        }
+      }
+
+      const blob = new Blob([combined], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const slug = (jobTitle || 'job').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      a.href = url;
+      a.download = `applicants-${slug}-${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Exported ${exportCount} applicant${exportCount !== 1 ? 's' : ''}`);
+      setExportModalOpen(false);
+    } catch {
+      toast.error('Export failed — please try again');
+    } finally {
+      setExporting(false);
+      setExportBatch(null);
+    }
   }
 
   async function updateStatus(appId: string, status: 'accepted' | 'rejected') {
@@ -102,6 +337,12 @@ export default function ApplicantsPage() {
   const applicant = selected?.applicant as IUser | undefined;
   const fullName = applicant ? `${applicant.firstname} ${applicant.lastname}` : '';
 
+  const exportFilterDescriptions: string[] = [];
+  if (statusFilter !== 'all') exportFilterDescriptions.push(`Status: ${tabs.find((t) => t.key === statusFilter)?.label}`);
+  if (search) exportFilterDescriptions.push(`Search: "${search}"`);
+  if (dateFrom || dateTo) exportFilterDescriptions.push(`Applied: ${dateFrom} – ${dateTo}`);
+  if (questionId && answerValue) exportFilterDescriptions.push(`${selectedQuestion?.question}: ${answerValue}`);
+
   return (
     <div>
       <Link href="/employer/jobs" className="btn btn-ghost btn-sm -ml-2 mb-4 inline-flex">
@@ -112,37 +353,200 @@ export default function ApplicantsPage() {
         title="Applicants"
         description={jobTitle ? `Applications for "${jobTitle}"` : 'Review and manage applicants'}
         action={
-          <button onClick={handleExport} className="btn btn-outline btn-sm">
+          <button onClick={openExportModal} className="btn btn-outline btn-sm">
             <Download className="w-3.5 h-3.5" /> Export CSV
           </button>
         }
       />
 
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl w-fit mb-6 flex-wrap">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => selectStatusFilter(t.key)}
-            className={cn(
-              'px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-              statusFilter === t.key
-                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+      {/* Tabs + search + filters */}
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl w-fit flex-wrap">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => selectStatusFilter(t.key)}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                statusFilter === t.key
+                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              {t.label}
+              {counts[t.key] > 0 && (
+                <span className={cn(
+                  'ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-semibold',
+                  statusFilter === t.key ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                )}>
+                  {counts[t.key]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search name or email…"
+              className={cn(compactInputClass, 'pl-9 w-56')}
+            />
+          </div>
+
+          <div className="relative" ref={filterRef}>
+            <button
+              onClick={() => setFilterOpen((o) => !o)}
+              className={cn('btn btn-outline btn-sm h-9', hasAdvancedFilters && 'border-blue-400 text-blue-600 dark:text-blue-400')}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" /> Filters
+              {hasAdvancedFilters && (
+                <span className="ml-1 w-1.5 h-1.5 rounded-full bg-blue-500" />
+              )}
+            </button>
+
+            {filterOpen && (
+              <div className="absolute right-0 mt-2 w-80 card p-4 shadow-lg z-20 space-y-5">
+                {/* Date applied */}
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Date applied</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DATE_PRESETS.map((p) => (
+                      <button
+                        key={p.key}
+                        onClick={() => selectDatePreset(p.key)}
+                        className={cn(
+                          'px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors',
+                          datePreset === p.key
+                            ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-950 dark:border-blue-700 dark:text-blue-300'
+                            : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-300'
+                        )}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {datePreset === 'custom' && (
+                    <div className="flex items-center gap-2 mt-3">
+                      <input
+                        type="date"
+                        className={cn(compactInputClass, 'min-w-0 flex-1')}
+                        value={customFromDraft}
+                        onChange={(e) => setCustomFromDraft(e.target.value)}
+                      />
+                      <span className="text-gray-400 text-sm">–</span>
+                      <input
+                        type="date"
+                        className={cn(compactInputClass, 'min-w-0 flex-1')}
+                        value={customToDraft}
+                        onChange={(e) => setCustomToDraft(e.target.value)}
+                      />
+                      <button
+                        onClick={applyCustomRange}
+                        disabled={!customFromDraft || !customToDraft}
+                        className="btn btn-secondary btn-sm h-9 flex-shrink-0"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  )}
+
+                  {(dateFrom || dateTo) && (
+                    <button onClick={clearDateFilter} className="text-xs text-gray-400 hover:text-gray-600 mt-2">
+                      Clear date filter
+                    </button>
+                  )}
+                </div>
+
+                {/* Screening question */}
+                {filterableQuestions.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Screening question</h4>
+                    <select
+                      className={cn(compactInputClass, 'w-full')}
+                      value={questionId}
+                      onChange={(e) => selectQuestionFilter(e.target.value)}
+                    >
+                      <option value="">Any question</option>
+                      {filterableQuestions.map((q) => (
+                        <option key={q._id} value={q._id}>{q.question}</option>
+                      ))}
+                    </select>
+
+                    {selectedQuestion && (
+                      <div className="mt-2">
+                        {selectedQuestion.type === 'date' ? (
+                          <input
+                            type="date"
+                            className={cn(compactInputClass, 'w-full')}
+                            value={answerValue}
+                            onChange={(e) => { setAnswerValue(e.target.value); setPage(1); }}
+                          />
+                        ) : (
+                          <select
+                            className={cn(compactInputClass, 'w-full')}
+                            value={answerValue}
+                            onChange={(e) => { setAnswerValue(e.target.value); setPage(1); }}
+                          >
+                            <option value="">Select an answer…</option>
+                            {(selectedQuestion.options ?? []).map((opt) => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    )}
+
+                    {questionId && (
+                      <button onClick={clearQuestionFilter} className="text-xs text-gray-400 hover:text-gray-600 mt-2">
+                        Clear question filter
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {hasAdvancedFilters && (
+                  <button onClick={() => { clearDateFilter(); clearQuestionFilter(); }} className="btn btn-ghost btn-sm w-full">
+                    Clear all filters
+                  </button>
+                )}
+              </div>
             )}
-          >
-            {t.label}
-            {counts[t.key] > 0 && (
-              <span className={cn(
-                'ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-semibold',
-                statusFilter === t.key ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
-              )}>
-                {counts[t.key]}
-              </span>
-            )}
-          </button>
-        ))}
+          </div>
+        </div>
       </div>
+
+      {/* Active filter chips */}
+      {(hasAdvancedFilters || search) && (
+        <div className="flex items-center gap-1.5 flex-wrap mb-4 -mt-2">
+          {search && (
+            <span className="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+              "{search}"
+              <button onClick={() => { setSearchInput(''); setSearch(''); setPage(1); }}><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          {(dateFrom || dateTo) && (
+            <span className="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+              {dateFrom} – {dateTo}
+              <button onClick={clearDateFilter}><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          {questionId && answerValue && (
+            <span className="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+              {selectedQuestion?.question}: {answerValue}
+              <button onClick={clearQuestionFilter}><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          <button onClick={clearAllFilters} className="text-xs text-blue-600 dark:text-blue-400 hover:underline ml-1">
+            Clear all
+          </button>
+        </div>
+      )}
 
       {/* List */}
       {loading ? (
@@ -223,6 +627,61 @@ export default function ApplicantsPage() {
           </div>
         </div>
       )}
+
+      {/* Export confirmation */}
+      <ConfirmModal
+        open={exportModalOpen}
+        title="Export applicants"
+        variant="info"
+        confirmLabel={exportCount ? `Export ${exportCount}` : 'Export'}
+        cancelLabel="Cancel"
+        loading={exportCountLoading || exporting}
+        onConfirm={confirmExport}
+        onCancel={closeExportModal}
+      >
+        <div className="space-y-3 text-sm">
+          {exportCountLoading ? (
+            <div className="flex items-center justify-center gap-2 text-gray-500 py-2">
+              <Spinner size="sm" /> Calculating…
+            </div>
+          ) : (
+            <>
+              {exportFilterDescriptions.length > 0 ? (
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-1">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Active filters</p>
+                  {exportFilterDescriptions.map((d, i) => (
+                    <p key={i} className="text-gray-600 dark:text-gray-300">{d}</p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center">No filters applied — exporting all applicants.</p>
+              )}
+
+              {exportCount === 0 ? (
+                <p className="text-amber-600 dark:text-amber-400 text-center font-medium">
+                  No applicants match these filters.
+                </p>
+              ) : (
+                <p className="text-center text-gray-700 dark:text-gray-300">
+                  <span className="font-semibold">{exportCount}</span> applicant{exportCount !== 1 ? 's' : ''} will be exported.
+                </p>
+              )}
+
+              {!!exportCount && exportCount > EXPORT_BATCH_SIZE && (
+                <p className="text-xs text-gray-400 text-center">
+                  Downloaded in {Math.ceil(exportCount / EXPORT_BATCH_SIZE)} batches of up to {EXPORT_BATCH_SIZE.toLocaleString()} and combined into a single CSV.
+                </p>
+              )}
+
+              {exporting && exportBatch && exportBatch.total > 1 && (
+                <div className="flex items-center justify-center gap-2 text-gray-500">
+                  <Spinner size="sm" /> Downloading batch {exportBatch.current} of {exportBatch.total}…
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </ConfirmModal>
 
       {/* Slide-over drawer */}
       {selected && (

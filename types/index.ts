@@ -186,6 +186,7 @@ export interface ApiResponse<T = any> {
   error?: string;
   pagination?: { page: number; limit: number; total: number; totalPages: number };
   counts?: Record<string, number>;
+  job?: { _id: string; title: string; questions: IJob['questions'] };
 }
 
 export interface PaginatedResponse<T> {

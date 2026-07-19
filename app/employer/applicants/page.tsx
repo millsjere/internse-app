@@ -10,7 +10,7 @@ import { Avatar } from '@/app/components/ui/Avatar';
 import { applicationStatusBadge, Badge } from '@/app/components/ui/Badge';
 import { formatRelativeDate } from '@/lib/utils';
 import { IApplication, IUser, IJob } from '@/types';
-import { Users, ArrowRight, FileText } from 'lucide-react';
+import { Users, ArrowRight, FileText, Search } from 'lucide-react';
 
 interface JobGroup {
   job: IJob;
@@ -20,6 +20,7 @@ interface JobGroup {
 export default function AllApplicantsPage() {
   const [groups, setGroups] = useState<JobGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,12 +46,39 @@ export default function AllApplicantsPage() {
 
   const totalApps = groups.reduce((acc, g) => acc + g.applications.length, 0);
 
+  const query = search.trim().toLowerCase();
+  const filteredGroups = query
+    ? groups
+        .map((g) => ({
+          job: g.job,
+          applications: g.applications.filter((app) => {
+            const a = app.applicant as IUser;
+            const name = a ? `${a.firstname} ${a.lastname}` : '';
+            return name.toLowerCase().includes(query) || a?.email?.toLowerCase().includes(query);
+          }),
+        }))
+        .filter((g) => g.applications.length > 0)
+    : groups;
+
   return (
     <div>
       <PageHeader
         title="Applicants"
         description={totalApps > 0 ? `${totalApps} total application${totalApps !== 1 ? 's' : ''} across all jobs` : 'Manage applicants across all your job postings'}
       />
+
+      {!loading && groups.length > 0 && (
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search applicants by name or email…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-20">
@@ -69,9 +97,17 @@ export default function AllApplicantsPage() {
             }
           />
         </div>
+      ) : filteredGroups.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            icon={Search}
+            title="No matching applicants"
+            description={`No applicants match "${search.trim()}". Try a different name or email.`}
+          />
+        </div>
       ) : (
         <div className="space-y-6">
-          {groups.map(({ job, applications }) => (
+          {filteredGroups.map(({ job, applications }) => (
             <div key={job._id} className="card">
               <div className="flex items-center justify-between mb-4">
                 <div>

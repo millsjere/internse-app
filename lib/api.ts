@@ -1,6 +1,17 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { ApiResponse } from '@/types';
 
+export interface ApplicationFilterParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  questionId?: string;
+  answer?: string;
+}
+
 class ApiClient {
   private client: AxiosInstance;
   private isRefreshing = false;
@@ -218,15 +229,14 @@ class ApiClient {
     return response.data;
   }
 
-  async getJobApplications(jobId: string, params?: { page?: number; limit?: number; status?: string }): Promise<ApiResponse> {
+  async getJobApplications(jobId: string, params?: ApplicationFilterParams): Promise<ApiResponse> {
     const response = await this.client.get(`/jobs/${jobId}/applications`, { params });
     return response.data;
   }
 
-  getJobApplicationsExportUrl(jobId: string, status?: string): string {
-    const baseURL = this.client.defaults.baseURL;
-    const query = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
-    return `${baseURL}/jobs/${jobId}/applications/export${query}`;
+  async getJobApplicationsExportBatch(jobId: string, params: ApplicationFilterParams): Promise<string> {
+    const response = await this.client.get(`/jobs/${jobId}/applications/export`, { params, responseType: 'text' });
+    return response.data as string;
   }
 
   getApplicationResumeDownloadUrl(applicationId: string): string {
