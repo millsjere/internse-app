@@ -8,8 +8,8 @@ export interface ApplicationFilterParams {
   search?: string;
   dateFrom?: string;
   dateTo?: string;
-  questionId?: string;
-  answer?: string;
+  // Applicant must match ALL pairs (AND) to be included
+  questions?: { questionId: string; answer: string }[];
 }
 
 class ApiClient {
@@ -229,13 +229,18 @@ class ApiClient {
     return response.data;
   }
 
+  private serializeApplicationFilterParams(params?: ApplicationFilterParams): Record<string, unknown> {
+    const { questions, ...rest } = params ?? {};
+    return questions && questions.length > 0 ? { ...rest, questions: JSON.stringify(questions) } : rest;
+  }
+
   async getJobApplications(jobId: string, params?: ApplicationFilterParams): Promise<ApiResponse> {
-    const response = await this.client.get(`/jobs/${jobId}/applications`, { params });
+    const response = await this.client.get(`/jobs/${jobId}/applications`, { params: this.serializeApplicationFilterParams(params) });
     return response.data;
   }
 
   async getJobApplicationsExportBatch(jobId: string, params: ApplicationFilterParams): Promise<string> {
-    const response = await this.client.get(`/jobs/${jobId}/applications/export`, { params, responseType: 'text' });
+    const response = await this.client.get(`/jobs/${jobId}/applications/export`, { params: this.serializeApplicationFilterParams(params), responseType: 'text' });
     return response.data as string;
   }
 

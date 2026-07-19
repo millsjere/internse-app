@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient, ApplicationFilterParams } from '@/lib/api';
@@ -112,11 +112,14 @@ export default function ApplicantsPage() {
   const [dateTo, setDateTo] = useState('');
   const [customFromDraft, setCustomFromDraft] = useState('');
   const [customToDraft, setCustomToDraft] = useState('');
-  const [questionId, setQuestionId] = useState('');
-  const [answerValue, setAnswerValue] = useState('');
+  // Each row is a question/answer pair; an applicant must match ALL rows (AND) to be included.
+  const [questionFilters, setQuestionFilters] = useState<{ questionId: string; answer: string }[]>([]);
 
-  const hasAdvancedFilters = Boolean(dateFrom || dateTo || (questionId && answerValue));
-  const selectedQuestion = questions.find((q) => q._id === questionId);
+  const completeQuestionFilters = useMemo(
+    () => questionFilters.filter((f) => f.questionId && f.answer),
+    [questionFilters]
+  );
+  const hasAdvancedFilters = Boolean(dateFrom || dateTo || completeQuestionFilters.length > 0);
   const filterableQuestions = questions.filter((q) => q.type && FILTERABLE_QUESTION_TYPES.has(q.type));
 
   // Export
@@ -152,9 +155,8 @@ export default function ApplicantsPage() {
     search: search || undefined,
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
-    questionId: questionId && answerValue ? questionId : undefined,
-    answer: questionId && answerValue ? answerValue : undefined,
-  }), [statusFilter, search, dateFrom, dateTo, questionId, answerValue]);
+    questions: completeQuestionFilters.length > 0 ? completeQuestionFilters : undefined,
+  }), [statusFilter, search, dateFrom, dateTo, completeQuestionFilters]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -217,14 +219,26 @@ export default function ApplicantsPage() {
     setPage(1);
   }
 
-  function selectQuestionFilter(id: string) {
-    setQuestionId(id);
-    setAnswerValue('');
+  function addQuestionFilterRow() {
+    setQuestionFilters((prev) => [...prev, { questionId: '', answer: '' }]);
   }
 
-  function clearQuestionFilter() {
-    setQuestionId('');
-    setAnswerValue('');
+  function setQuestionFilterQuestion(index: number, id: string) {
+    setQuestionFilters((prev) => prev.map((f, i) => (i === index ? { questionId: id, answer: '' } : f)));
+  }
+
+  function setQuestionFilterAnswer(index: number, value: string) {
+    setQuestionFilters((prev) => prev.map((f, i) => (i === index ? { ...f, answer: value } : f)));
+    setPage(1);
+  }
+
+  function removeQuestionFilterRow(index: number) {
+    setQuestionFilters((prev) => prev.filter((_, i) => i !== index));
+    setPage(1);
+  }
+
+  function clearQuestionFilters() {
+    setQuestionFilters([]);
     setPage(1);
   }
 
@@ -232,7 +246,7 @@ export default function ApplicantsPage() {
     setSearchInput('');
     setSearch('');
     clearDateFilter();
-    clearQuestionFilter();
+    clearQuestionFilters();
   }
 
   function selectStatusFilter(status: StatusFilter) {
@@ -341,7 +355,9 @@ export default function ApplicantsPage() {
   if (statusFilter !== 'all') exportFilterDescriptions.push(`Status: ${tabs.find((t) => t.key === statusFilter)?.label}`);
   if (search) exportFilterDescriptions.push(`Search: "${search}"`);
   if (dateFrom || dateTo) exportFilterDescriptions.push(`Applied: ${dateFrom} – ${dateTo}`);
-  if (questionId && answerValue) exportFilterDescriptions.push(`${selectedQuestion?.question}: ${answerValue}`);
+  completeQuestionFilters.forEach((row) => {
+    exportFilterDescriptions.push(`${questions.find((q) => q._id === row.questionId)?.question}: ${row.answer}`);
+  });
 
   return (
     <div>
@@ -463,55 +479,74 @@ export default function ApplicantsPage() {
                   )}
                 </div>
 
-                {/* Screening question */}
+                {/* Screening questions — match ALL selected rows (AND) */}
                 {filterableQuestions.length > 0 && (
                   <div>
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Screening question</h4>
-                    <select
-                      className={cn(compactInputClass, 'w-full')}
-                      value={questionId}
-                      onChange={(e) => selectQuestionFilter(e.target.value)}
-                    >
-                      <option value="">Any question</option>
-                      {filterableQuestions.map((q) => (
-                        <option key={q._id} value={q._id}>{q.question}</option>
-                      ))}
-                    </select>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Screening questions</h4>
+                    <div className="space-y-2">
+                      {questionFilters.map((row, index) => {
+                        const rowQuestion = questions.find((q) => q._id === row.questionId);
+                        const availableOptions = filterableQuestions.filter(
+                          (q) => q._id === row.questionId || !questionFilters.some((r, ri) => ri !== index && r.questionId === q._id)
+                        );
+                        return (
+                          <div key={index} className="flex items-start gap-1.5">
+                            <div className="flex-1 space-y-1.5">
+                              <select
+                                className={cn(compactInputClass, 'w-full')}
+                                value={row.questionId}
+                                onChange={(e) => setQuestionFilterQuestion(index, e.target.value)}
+                              >
+                                <option value="">Select a question…</option>
+                                {availableOptions.map((q) => (
+                                  <option key={q._id} value={q._id}>{q.question}</option>
+                                ))}
+                              </select>
 
-                    {selectedQuestion && (
-                      <div className="mt-2">
-                        {selectedQuestion.type === 'date' ? (
-                          <input
-                            type="date"
-                            className={cn(compactInputClass, 'w-full')}
-                            value={answerValue}
-                            onChange={(e) => { setAnswerValue(e.target.value); setPage(1); }}
-                          />
-                        ) : (
-                          <select
-                            className={cn(compactInputClass, 'w-full')}
-                            value={answerValue}
-                            onChange={(e) => { setAnswerValue(e.target.value); setPage(1); }}
-                          >
-                            <option value="">Select an answer…</option>
-                            {(selectedQuestion.options ?? []).map((opt) => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-                    )}
+                              {rowQuestion && (
+                                rowQuestion.type === 'date' ? (
+                                  <input
+                                    type="date"
+                                    className={cn(compactInputClass, 'w-full')}
+                                    value={row.answer}
+                                    onChange={(e) => setQuestionFilterAnswer(index, e.target.value)}
+                                  />
+                                ) : (
+                                  <select
+                                    className={cn(compactInputClass, 'w-full')}
+                                    value={row.answer}
+                                    onChange={(e) => setQuestionFilterAnswer(index, e.target.value)}
+                                  >
+                                    <option value="">Select an answer…</option>
+                                    {(rowQuestion.options ?? []).map((opt) => (
+                                      <option key={opt} value={opt}>{opt}</option>
+                                    ))}
+                                  </select>
+                                )
+                              )}
+                            </div>
+                            <button
+                              onClick={() => removeQuestionFilterRow(index)}
+                              className="h-9 w-9 flex-shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                              aria-label="Remove this question filter"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
 
-                    {questionId && (
-                      <button onClick={clearQuestionFilter} className="text-xs text-gray-400 hover:text-gray-600 mt-2">
-                        Clear question filter
+                    {questionFilters.length < filterableQuestions.length && (
+                      <button onClick={addQuestionFilterRow} className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-2">
+                        + Add {questionFilters.length > 0 ? 'another' : 'a'} question filter
                       </button>
                     )}
                   </div>
                 )}
 
                 {hasAdvancedFilters && (
-                  <button onClick={() => { clearDateFilter(); clearQuestionFilter(); }} className="btn btn-ghost btn-sm w-full">
+                  <button onClick={() => { clearDateFilter(); clearQuestionFilters(); }} className="btn btn-ghost btn-sm w-full">
                     Clear all filters
                   </button>
                 )}
@@ -536,12 +571,12 @@ export default function ApplicantsPage() {
               <button onClick={clearDateFilter}><X className="w-3 h-3" /></button>
             </span>
           )}
-          {questionId && answerValue && (
-            <span className="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
-              {selectedQuestion?.question}: {answerValue}
-              <button onClick={clearQuestionFilter}><X className="w-3 h-3" /></button>
+          {questionFilters.map((row, index) => row.questionId && row.answer && (
+            <span key={index} className="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+              {questions.find((q) => q._id === row.questionId)?.question}: {row.answer}
+              <button onClick={() => removeQuestionFilterRow(index)}><X className="w-3 h-3" /></button>
             </span>
-          )}
+          ))}
           <button onClick={clearAllFilters} className="text-xs text-blue-600 dark:text-blue-400 hover:underline ml-1">
             Clear all
           </button>
