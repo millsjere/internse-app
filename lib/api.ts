@@ -12,6 +12,14 @@ export interface ApplicationFilterParams {
   questions?: { questionId: string; answer: string }[];
 }
 
+export interface ExportBatchResult {
+  csv: string;
+  rowCount: number;
+  // Cursor pointing at the last row of this batch, or null once there's nothing left to page
+  // through — pass it back as cursorId/cursorDate to fetch the next batch.
+  nextCursor: { id: string; date: string } | null;
+}
+
 class ApiClient {
   private client: AxiosInstance;
   private isRefreshing = false;
@@ -239,9 +247,22 @@ class ApiClient {
     return response.data;
   }
 
-  async getJobApplicationsExportBatch(jobId: string, params: ApplicationFilterParams): Promise<string> {
-    const response = await this.client.get(`/jobs/${jobId}/applications/export`, { params: this.serializeApplicationFilterParams(params), responseType: 'text' });
-    return response.data as string;
+  async getJobApplicationsExportBatch(
+    jobId: string,
+    params: Omit<ApplicationFilterParams, 'page'> & { cursorId?: string; cursorDate?: string }
+  ): Promise<ExportBatchResult> {
+    const response = await this.client.get(`/jobs/${jobId}/applications/export`, {
+      params: this.serializeApplicationFilterParams(params),
+      responseType: 'text',
+    });
+    const rowCount = parseInt(response.headers['x-export-row-count'] as string, 10) || 0;
+    const nextCursorId = response.headers['x-export-next-cursor-id'] as string | undefined;
+    const nextCursorDate = response.headers['x-export-next-cursor-date'] as string | undefined;
+    return {
+      csv: response.data as string,
+      rowCount,
+      nextCursor: nextCursorId && nextCursorDate ? { id: nextCursorId, date: nextCursorDate } : null,
+    };
   }
 
   getApplicationResumeDownloadUrl(applicationId: string): string {

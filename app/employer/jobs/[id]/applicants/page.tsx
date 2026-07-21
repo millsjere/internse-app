@@ -275,47 +275,73 @@ export default function ApplicantsPage() {
     setExportBatch(null);
   }
 
+  function downloadCsv(csv: string, filename: string) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   async function confirmExport() {
     if (!exportCount) {
       toast.error('No applicants match the current filters');
       return;
     }
     setExporting(true);
-    const totalBatches = Math.ceil(exportCount / EXPORT_BATCH_SIZE);
-    setExportBatch({ current: 0, total: totalBatches });
+    // `total` here is just an estimate for the progress label — the loop itself is driven by
+    // the cursor the server hands back, not by a precomputed page count, so it can't fail (or
+    // undercount) if the applicant list changes while the export is running.
+    const estimatedBatches = Math.ceil(exportCount / EXPORT_BATCH_SIZE);
+    setExportBatch({ current: 0, total: estimatedBatches });
+    const slug = (jobTitle || 'job').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const timestamp = Date.now();
+
+    let cursor: { id: string; date: string } | undefined;
+    let batchNumber = 0;
+    let exportedCount = 0;
     try {
-      let combined = '';
-      for (let i = 1; i <= totalBatches; i++) {
-        setExportBatch({ current: i, total: totalBatches });
-        const csv = await apiClient.getJobApplicationsExportBatch(jobId, {
-          page: i,
+      // Safety cap so a server-side cursor bug can't spin this into an infinite loop —
+      // generous headroom over the estimate in case applicants were added mid-export.
+      const maxBatches = estimatedBatches + 20;
+      while (batchNumber < maxBatches) {
+        batchNumber += 1;
+        setExportBatch({ current: batchNumber, total: Math.max(estimatedBatches, batchNumber) });
+
+        const { csv, rowCount, nextCursor } = await apiClient.getJobApplicationsExportBatch(jobId, {
           limit: EXPORT_BATCH_SIZE,
+          cursorId: cursor?.id,
+          cursorDate: cursor?.date,
           ...currentFilterParams(),
         });
-        if (i === 1) {
-          combined = csv;
-        } else {
-          // Drop the repeated header row (and BOM) from every batch after the first
-          const lines = csv.replace(/^﻿/, '').split('\n');
-          combined += '\n' + lines.slice(1).join('\n');
+
+        if (rowCount > 0) {
+          exportedCount += rowCount;
+          // Only multi-part exports get a "-part-N" suffix so the common (single-file) case
+          // keeps the plain filename it always had.
+          const isMultiPart = batchNumber > 1 || rowCount === EXPORT_BATCH_SIZE;
+          const filename = isMultiPart
+            ? `applicants-${slug}-${timestamp}-part-${batchNumber}.csv`
+            : `applicants-${slug}-${timestamp}.csv`;
+          downloadCsv(csv, filename);
         }
+
+        if (rowCount < EXPORT_BATCH_SIZE || !nextCursor) break;
+        cursor = nextCursor;
       }
 
-      const blob = new Blob([combined], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const slug = (jobTitle || 'job').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      a.href = url;
-      a.download = `applicants-${slug}-${Date.now()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      toast.success(`Exported ${exportCount} applicant${exportCount !== 1 ? 's' : ''}`);
+      toast.success(`Exported ${exportedCount} applicant${exportedCount !== 1 ? 's' : ''}`);
       setExportModalOpen(false);
     } catch {
-      toast.error('Export failed — please try again');
+      toast.error(
+        batchNumber > 1
+          ? `Export failed after ${exportedCount} applicant${exportedCount !== 1 ? 's' : ''} were already downloaded — please try again`
+          : 'Export failed — please try again'
+      );
     } finally {
       setExporting(false);
       setExportBatch(null);
@@ -704,7 +730,7 @@ export default function ApplicantsPage() {
 
               {!!exportCount && exportCount > EXPORT_BATCH_SIZE && (
                 <p className="text-xs text-gray-400 text-center">
-                  Downloaded in {Math.ceil(exportCount / EXPORT_BATCH_SIZE)} batches of up to {EXPORT_BATCH_SIZE.toLocaleString()} and combined into a single CSV.
+                  Downloaded as separate CSV files in batches of up to {EXPORT_BATCH_SIZE.toLocaleString()} — each file saves as soon as it&apos;s ready.
                 </p>
               )}
 
